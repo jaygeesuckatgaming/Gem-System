@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Node
+node_modules/
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sensitive files
+cookies.txt
+mcp_settings.ini
+
+# Large media files
+*.mp3
+*.mp4
+*.wav
+*.avi
+*.mov
+requests/
+background_songs/
+
+# Database and logs
+*.db
+*.sqlite
+*.log
+gem_memory_db/
+
+# Temporary files
+*.tmp
+*.temp
+download_queue.txt
+autoplay.txt
+pause_play_signal.txt
+resume_signal.txt
+now_playing_state.txt
+
+# yt-dlp
+*.part
+*.ytdl
+
+# StyleTTS2 checkpoints (large files)
+StyleTTS2/models/
+StyleTTS2/checkpoints/
+
+# Neurosync generated data (too many small files)
+Neurosync/NeuroSync_Player/generated/
+Neurosync/NeuroSync_Local_API/utils/model/
+
+# OS files
+.DS_Store
+Thumbs.db

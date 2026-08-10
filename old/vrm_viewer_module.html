@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>VRM Viewer - Module</title>
+    <style>
+        body { margin: 0; background: #1a1a2e; color: white; font-family: Arial; }
+        #c { width: 100vw; height: 100vh; }
+        #ui { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; }
+        #st { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div id="c"></div>
+    <div id="ui">
+        <h2>VRM Viewer</h2>
+        <input type="file" id="f" accept=".vrm"><br><br>
+        <label>Scale: <input type="range" id="sc" min="0.1" max="5" value="1"></label><br><br>
+        <label><input type="checkbox" id="rt" checked> Rotate</label>
+    </div>
+    <div id="st">Loading...</div>
+    
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.module.js';
+        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.137.0/examples/jsm/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.137.0/examples/jsm/controls/OrbitControls.js';
+        import { VRMLoaderPlugin } from 'https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@0.6.10/build/three-vrm.module.js';
+        
+        const st = document.getElementById('st');
+        st.textContent = 'Libraries loaded!';
+        st.style.color = '#0f0';
+        
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('c').appendChild(renderer.domElement);
+        
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth/window.innerHeight, 0.1, 20);
+        camera.position.set(0, 1.4, 3);
+        
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 1.4, 0);
+        
+        const dl = new THREE.DirectionalLight(0xffffff, 1);
+        dl.position.set(1, 1, 1);
+        scene.add(dl);
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        
+        const loader = new GLTFLoader();
+        let vrm = null;
+        
+        document.getElementById('f').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            st.textContent = 'Loading: ' + file.name;
+            const url = URL.createObjectURL(file);
+            
+            try {
+                const gltf = await loader.loadAsync(url);
+                const vrmPlugin = new VRMLoaderPlugin();
+                await vrmPlugin.afterRoot(gltf);
+                
+                if (vrm) scene.remove(vrm.scene);
+                vrm = gltf.userData.vrm;
+                scene.add(vrm.scene);
+                st.textContent = 'Loaded!';
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                st.textContent = 'Error: ' + err.message;
+                st.style.color = 'red';
+                console.error(err);
+            }
+        });
+        
+        document.getElementById('sc').addEventListener('input', (e) => {
+            if (vrm) vrm.scene.scale.setScalar(+e.target.value);
+        });
+        
+        let ws;
+        function cw() {
+            ws = new WebSocket('ws://localhost:8765');
+            ws.onopen = () => console.log('WS OK');
+            ws.onclose = () => setTimeout(cw, 3000);
+            ws.onmessage = (ev) => {
+                if (!vrm) return;
+                const d = JSON.parse(ev.data);
+                if (d.expressions) for (const [k,v] of Object.entries(d.expressions)) vrm.expressionManager?.setValue(k, v);
+                if (d.lookAt) vrm.lookAt?.applyer?.setValue(d.lookAt.yaw||0, d.lookAt.pitch||0);
+            };
+        }
+        cw();
+        
+        const clock = new THREE.Clock();
+        function animate() {
+            requestAnimationFrame(animate);
+            if (vrm) {
+                vrm.update(clock.getDelta());
+                if (document.getElementById('rt').checked) vrm.scene.rotation.y += 0.005;
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+Music Recognition Help
+=========================
+
+This section contains settings for the music recognition feature.
+
+The main purpose of this feature is to listen to the audio input and identify any music playing.
+
+Key Settings:
+-   **enable:** Set to 'true' to activate the feature, or 'false' to disable it.
+-   **api_key:** Enter your API key for the recognition service here.
+
+Remember to click 'Save All Settings' at the bottom after making changes and then restart the MCP server.
+
+If you have selected a device, lets say B1(If you are using VoiceMeeter)
+and you get this error in the MCP cli window:
+ MCP MUSIC ERROR: Error during audio recording: Error starting stream: Unanticipated host error [PaErrorCode -9999]: 'WdmSyncIoctl: DeviceIoControl GLE = 0x00000490 (prop_set = {8C134960-51AD-11CF-878A-94F801C10000}, prop_id = 10)' [Windows WDM-KS error 0]
+Try with a different B1 from the audio list because there are differences between them.

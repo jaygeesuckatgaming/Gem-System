@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>CDN Test</title>
+    <style>
+        body { background: #1a1a2e; color: white; padding: 20px; font-family: Arial; }
+        .ok { color: #0f0; }
+        .fail { color: #f00; }
+    </style>
+</head>
+<body>
+    <h2>Library Loading Test</h2>
+    <div id="results"></div>
+    
+    <script>
+        const r = document.getElementById('results');
+        const test = (name, ok) => {
+            r.innerHTML += name + ': <span class="' + (ok ? 'ok' : 'fail') + '">' + (ok ? 'OK' : 'FAILED') + '</span><br>';
+        };
+        
+        // Test 1: Basic Three.js from different CDNs
+        test('1. jsdelivr', false);
+        const s1 = document.createElement('script');
+        s1.src = 'https://cdn.jsdelivr.net/npm/three@0.137.0/build/three.min.js';
+        s1.onload = () => { test('1. jsdelivr', true); test('2. THREE exists', typeof THREE !== 'undefined'); };
+        s1.onerror = () => { test('1. jsdelivr', false); };
+        document.head.appendChild(s1);
+        
+        // Test 2: VRM library
+        setTimeout(() => {
+            test('3. VRM loaded', typeof THREE !== 'undefined' && typeof THREE.VRM !== 'undefined');
+            if (typeof THREE === 'undefined') {
+                r.innerHTML += '<br><b>Three.js failed to load - check your internet/firewall</b>';
+            } else if (typeof THREE.VRM === 'undefined') {
+                r.innerHTML += '<br><b>VRM library failed - trying alternative...</b>';
+                const s2 = document.createElement('script');
+                s2.src = 'https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@0.6.10/build/three-vrm.min.js';
+                s2.onload = () => { test('4. VRM (retry)', true); };
+                s2.onerror = () => { test('4. VRM (retry)', false); };
+                document.head.appendChild(s2);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+keyword_list = [
+    "switch light one",
+    "switch light two",
+    "set the mood",
+    "do the fast cars dance",
+    "play fast cars and superstars",
+    "stop dancing",
+    "switch black sweat pants",
+    "switch black and white tshirt",
+    "switch white night dress",
+    "switch black skirt one",
+    "movel",
+    "mover",
+    "moveu",
+    "moved",
+    "fire",
+]

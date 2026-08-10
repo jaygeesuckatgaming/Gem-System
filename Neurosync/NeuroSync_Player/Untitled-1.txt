@@ -1,0 +1,2 @@
+target_x = 923  # <<< CHANGE THIS TO YOUR ODM'S X-COORDINATE
+    target_y = 177  # <<< CHANGE THIS TO YOUR ODM'S Y-COORDINATE

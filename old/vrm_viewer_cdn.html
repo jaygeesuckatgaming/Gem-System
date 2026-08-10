@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>VRM Viewer</title>
+    <style>
+        body { margin: 0; background: #1a1a2e; color: white; font-family: Arial; }
+        #c { width: 100vw; height: 100vh; }
+        #ui { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 10px; }
+        #st { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 5px; color: #0f0; }
+    </style>
+</head>
+<body>
+    <div id="c"></div>
+    <div id="ui">
+        <h2>VRM Viewer</h2>
+        <input type="file" id="f" accept=".vrm"><br><br>
+        <label>Scale: <input type="range" id="sc" min="0.1" max="5" value="1"></label><br><br>
+        <label><input type="checkbox" id="rt" checked> Rotate</label>
+    </div>
+    <div id="st">Loading libraries...</div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.137.0/three.min.js" integrity="sha512-7NqHh8wJeJqOWSqGLf8555555555555555555555555" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.137.0/examples/js/loaders/GLTFLoader.min.js" integrity="sha512-7NqHh8wJeJqOWSqGLf8555555555555555555555555" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.137.0/examples/js/controls/OrbitControls.min.js" integrity="sha512-7NqHh8wJeJqOWSqGLf8555555555555555555555555" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@0.6.10/build/three-vrm.min.js"></script>
+    
+    <script>
+        const st = document.getElementById('st');
+        setTimeout(() => {
+            if (typeof THREE === 'undefined' || typeof THREE.VRM === 'undefined') {
+                st.textContent = 'CDN blocked - open vrm_viewer_local.html instead';
+                st.style.color = 'red';
+            } else {
+                st.textContent = 'Ready - Load a VRM';
+            }
+        }, 3000);
+        
+        // Rest of code would go here but let's test CDN first
+    </script>
+</body>
+</html>

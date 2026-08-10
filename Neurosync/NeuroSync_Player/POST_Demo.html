@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>POST Example</title>
+<style>
+  /* Optional: Add some basic styling to make the divs look clickable */
+  .hl-message {
+    cursor: pointer; /* Change cursor to pointer on hover */
+    border: 1px solid #ccc; /* Add a light border */
+    padding: 10px; /* Add some padding */
+    margin-bottom: 5px; /* Add space below */
+    background-color: #f9f9f9; /* Light background */
+  }
+  .hl-message:hover {
+    background-color: #eee; /* Slightly darker background on hover */
+  }
+</style>
+</head>
+<body>
+
+<!-- First Div -->
+Message 1
+<div id="message1" class="hl-message" dir="auto" onclick="postMessage1()">
+  Thailand, officially the Kingdom of Thailand and historically known as Siam.
+</div>
+<br> <!-- Reduced spacing slightly -->
+
+<!-- Second Div -->
+Message 2
+<div id="message2" class="hl-message" dir="auto" onclick="postMessage2()">
+  Japan is an island country in East Asia, located in the northwest Pacific Ocean.
+</div>
+<br><br>
+
+<script>
+// Function for the first div
+function postMessage1() {
+  // Get text specifically from the first div using its unique ID
+  const messageText = document.getElementById("message1").textContent;
+  console.log("Sending message 1:", messageText); // Log which message is being sent
+  sendMessageToServer(messageText, "Message 1"); // Call a common function
+}
+
+// Function for the second div
+function postMessage2() {
+  // Get text specifically from the second div using its unique ID
+  const messageText = document.getElementById("message2").textContent;
+  console.log("Sending message 2:", messageText); // Log which message is being sent
+  sendMessageToServer(messageText, "Message 2"); // Call the same common function
+}
+
+// Common function to handle the actual fetch request (to avoid repetition)
+function sendMessageToServer(textToSend, messageLabel) {
+  fetch('http://localhost:13000/tts', {  // Replace with your Flask server URL
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({text: textToSend}) // Send the specific text
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log(`Success (${messageLabel}):`, data);
+    // Handle the response from your Flask server here
+    alert(`${messageLabel} sent successfully! Response: ${JSON.stringify(data)}`);
+  })
+  .catch((error) => {
+    console.error(`Error (${messageLabel}):`, error);
+    alert(`Error sending ${messageLabel}: ${error}`);
+  });
+}
+</script>
+
+</body>
+</html>
