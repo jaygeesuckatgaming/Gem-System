@@ -1,3 +1,4 @@
+This is an old readme it will be updated......
 !! OBS I´m using Python 3.10 when testing, it might work with other versions but thats the python version i use..
 
 Gem-System and Neurosync are now using the same venv (Conda).
