@@ -124,7 +124,7 @@ def text_to_speech(
     voice_wav: UploadFile | None = File(None),
 ):
     """
-    Generate speech from text using the pre-loaded voice prompt or a custom voice.
+    Generate speech from text using the pre-loaded Voice prompt or a custom voice.
 
     Args:
         text: Text to convert to speech
@@ -151,6 +151,48 @@ def text_to_speech(
             raise HTTPException(
                 status_code=400, detail="voice_url must start with http://, https://, or hf://"
             )
+        model_state = tts_model._cached_get_state_for_audio_prompt(voice_url)
+        logging.warning("Using voice from URL: %s", voice_url)
+    elif voice_wav is not None:
+        # Use uploaded voice file - preserve extension for format detection
+        suffix = Path(voice_wav.filename).suffix if voice_wav.filename else ".wav"
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            content = voice_wav.file.read()
+            temp_file.write(content)
+            temp_file.flush()
+            temp_file_path = temp_file.name
+
+        # Close the file before reading it back (required on Windows)
+        try:
+            model_state = tts_model.get_state_for_audio_prompt(Path(temp_file_path), truncate=True)
+        finally:
+            os.unlink(temp_file_path)
+    else:
+        raise HTTPException(status_code=500, detail="This should never happen.")
+
+    # Save to server_output.wav for watcher_to_face compatibility
+    try:
+        import scipy.io.wavfile
+        import numpy as np
+        from pathlib import Path
+        
+        # Generate audio and save to file
+        audio = tts_model.generate_audio(model_state, text)
+        audio_np = audio.cpu().numpy()
+        output_filepath = Path(__file__).parent.parent / "server_output.wav"
+        scipy.io.wavfile.write(str(output_filepath), tts_model.sample_rate, audio_np)
+        logging.info(f"Saved audio to: {output_filepath}")
+    except Exception as e:
+        logging.error(f"Failed to save audio file: {e}")
+
+    return StreamingResponse(
+        generate_data_with_state(text, model_state),
+        media_type="audio/wav",
+        headers={
+            "Content-Disposition": "attachment; filename=generated_speech.wav",
+            "Transfer-Encoding": "chunked",
+        },
+    )
         model_state = tts_model._cached_get_state_for_audio_prompt(voice_url)
         logging.warning("Using voice from URL: %s", voice_url)
     elif voice_wav is not None:
