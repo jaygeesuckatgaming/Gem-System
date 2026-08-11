@@ -260,12 +260,48 @@ RAG Trigger Words Examples:
         self.load_osc_settings()
     
     def setup_opencode_widgets(self, parent_frame):
-        """Setup OpenCode tab - placeholder"""
-        info_frame = ttk.LabelFrame(parent_frame, text="OpenCode Settings", padding=15)
-        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        ttk.Label(info_frame, text="OpenCode configuration coming soon.", font=('TkDefaultFont', 11)).pack(pady=10)
-        ttk.Label(info_frame, text="This tab will contain: OpenCode server URL, browser automation settings", 
+        """Setup OpenCode tab with server controls"""
+        # OpenCode Server Control frame
+        server_frame = ttk.LabelFrame(parent_frame, text="OpenCode Server Control", padding=15)
+        server_frame.pack(fill="x", padx=20, pady=10)
+        
+        ttk.Label(server_frame, text="OpenCode Server Status:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.opencode_status_var = tk.StringVar(value="Not Running")
+        status_label = ttk.Label(server_frame, textvariable=self.opencode_status_var, foreground="gray")
+        status_label.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        
+        ttk.Label(server_frame, text="Server URL:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.opencode_url_var = tk.StringVar(value="http://localhost:4096")
+        url_entry = ttk.Entry(server_frame, textvariable=self.opencode_url_var, width=40)
+        url_entry.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        
+        # Launch button
+        launch_btn = ttk.Button(server_frame, text="Start OpenCode Server", command=self.run_opencode_server)
+        launch_btn.grid(row=2, column=1, sticky="w", padx=5, pady=10)
+        
+        # Configuration frame
+        config_frame = ttk.LabelFrame(parent_frame, text="OpenCode Configuration", padding=15)
+        config_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        ttk.Label(config_frame, text="OpenCode server configuration coming soon.", 
+                 font=('TkDefaultFont', 11)).pack(pady=10)
+        ttk.Label(config_frame, text="This section will contain: Browser automation settings, context memory options", 
                  font=('TkDefaultFont', 9)).pack(pady=5)
+        
+        # Info text
+        info_text = """
+OpenCode Integration:
+• Browser automation via Chrome DevTools MCP
+• Web navigation and interaction
+• Content extraction and analysis
+• Used for research and data gathering
+
+Server Info:
+• Default URL: http://localhost:4096
+• Uses Chrome DevTools MCP protocol
+• Requires Chrome browser running
+"""
+        ttk.Label(parent_frame, text=info_text, justify="left", font=('TkDefaultFont', 9)).pack(pady=10, padx=20)
     
     def setup_llm_widgets(self, parent_frame):
         """Setup LLM tab with LLM model selection and configuration"""
@@ -1464,6 +1500,11 @@ TTS Notes:
     def run_main_script(self): self._run_start_script("start_mcp.bat")
     def run_styletts2_script(self): self._run_start_script("Start_StyleTTS2.bat")
     def run_vision_script(self): self._run_start_script("start_vision.bat")
+    def run_opencode_server(self):
+        """Launch OpenCode server"""
+        self._run_start_script("start_opencode.bat")
+        self.opencode_status_var.set("Starting...")
+        messagebox.showinfo("OpenCode Server", "Starting OpenCode server...\n\nCheck the console window for status.")
     def _run_start_script(self, bat_file_name):
         script_path = os.path.join(os.path.dirname(__file__), "start_scripts", bat_file_name)
         try:
