@@ -326,8 +326,27 @@ RAG Trigger Words Examples:
         mcp_port_entry = ttk.Entry(mcp_frame, textvariable=self.mcp_port_var, width=10)
         mcp_port_entry.grid(row=1, column=1, sticky="w", padx=5, pady=5)
         
+        # Assistant Configuration section
+        assistant_frame = ttk.LabelFrame(parent_frame, text="Assistant Configuration", padding=15)
+        assistant_frame.pack(fill="x", padx=20, pady=10)
+        
+        ttk.Label(assistant_frame, text="Wake Words:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.wake_words_var = tk.StringVar(value="Gem, Jen, Jim, @GemChadee")
+        wake_words_entry = ttk.Entry(assistant_frame, textvariable=self.wake_words_var, width=50)
+        wake_words_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(assistant_frame, text="Command Verbs:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.command_verbs_var = tk.StringVar(value="go, move, navigate, look, turn, get, grab, put")
+        command_verbs_entry = ttk.Entry(assistant_frame, textvariable=self.command_verbs_var, width=50)
+        command_verbs_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        ttk.Label(assistant_frame, text="Max Response Length:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        self.max_response_length_var = tk.StringVar(value="2000")
+        response_length_spinbox = ttk.Spinbox(assistant_frame, textvariable=self.max_response_length_var, from_=100, to=10000, width=10)
+        response_length_spinbox.grid(row=2, column=1, sticky="w", padx=5, pady=5)
+        
         # Save button
-        save_btn = ttk.Button(parent_frame, text="Save LLM & MCP Settings", command=self.save_llm_settings)
+        save_btn = ttk.Button(parent_frame, text="Save LLM, MCP & Assistant Settings", command=self.save_llm_settings)
         save_btn.pack(pady=15)
         
         # Info text
@@ -345,7 +364,7 @@ LLM Providers:
         self.load_llm_settings()
     
     def load_llm_settings(self):
-        """Load LLM and MCP settings from mcp_settings.ini"""
+        """Load LLM, MCP, and Assistant settings from mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
@@ -360,6 +379,17 @@ LLM Providers:
                 
                 mcp_port = self.config.get('MCP', 'port', fallback='5000')
                 self.mcp_port_var.set(mcp_port)
+            
+            # Load Assistant settings
+            if self.config.has_section('Assistant'):
+                wake_words = self.config.get('Assistant', 'wake_words', fallback='Gem, Jen, Jim, @GemChadee')
+                self.wake_words_var.set(wake_words)
+                
+                command_verbs = self.config.get('Assistant', 'command_verbs', fallback='go, move, navigate, look, turn, get, grab, put')
+                self.command_verbs_var.set(command_verbs)
+                
+                max_response_length = self.config.get('Assistant', 'max_response_length', fallback='2000')
+                self.max_response_length_var.set(max_response_length)
             
             # Load API keys
             if self.config.has_section('Gemini'):
@@ -383,7 +413,7 @@ LLM Providers:
             print(f"CONTROL PANEL: Could not load LLM settings: {e}")
     
     def save_llm_settings(self):
-        """Save LLM and MCP settings to mcp_settings.ini"""
+        """Save LLM, MCP, and Assistant settings to mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
@@ -393,6 +423,13 @@ LLM Providers:
             self.config.set('MCP', 'llm_choice', self.llm_choice_var.get())
             self.config.set('MCP', 'host', self.mcp_host_var.get())
             self.config.set('MCP', 'port', self.mcp_port_var.get())
+            
+            # Save Assistant settings
+            if not self.config.has_section('Assistant'):
+                self.config.add_section('Assistant')
+            self.config.set('Assistant', 'wake_words', self.wake_words_var.get())
+            self.config.set('Assistant', 'command_verbs', self.command_verbs_var.get())
+            self.config.set('Assistant', 'max_response_length', self.max_response_length_var.get())
             
             # Save API keys
             if not self.config.has_section('Gemini'):
@@ -415,7 +452,7 @@ LLM Providers:
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
             
-            messagebox.showinfo("Success", "LLM and MCP settings saved to mcp_settings.ini!")
+            messagebox.showinfo("Success", "LLM, MCP and Assistant settings saved to mcp_settings.ini!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save LLM settings:\n{e}")
     
@@ -1442,10 +1479,11 @@ TTS Notes:
         osc_sections = {'OSC'}  # OSC section now has dedicated tab
         llm_sections = {'Gemini', 'Ollama', 'OllamaCloud'}  # LLM sections now have dedicated tab
         mcp_section = {'MCP'}  # MCP section now has dedicated tab in LLM tab
+        assistant_section = {'Assistant'}  # Assistant section now has dedicated tab in LLM tab
         music_sections = {'MusicDownloader'}  # MusicDownloader section now has dedicated tab
         memory_sections = {'RAG', 'Memory', 'Database'}  # Memory sections now have dedicated tab
         for section in self.config.sections():
-            if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections or section in mcp_section or section in music_sections or section in memory_sections: continue
+            if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections or section in mcp_section or section in assistant_section or section in music_sections or section in memory_sections: continue
             parent_container = section_container_map.get(section, default_container)
             if not parent_container: continue
             self.ini_entries[section] = {}
