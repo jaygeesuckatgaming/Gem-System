@@ -375,6 +375,50 @@ LLM Providers:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save LLM settings:\n{e}")
     
+    def load_music_settings(self):
+        """Load Music Downloader settings from mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            if self.config.has_section('MusicDownloader'):
+                downloader_enabled = self.config.getboolean('MusicDownloader', 'enabled', fallback=True)
+                self.music_downloader_enabled_var.set(downloader_enabled)
+                
+                queue_length_str = self.config.get('MusicDownloader', 'max_queue_length', fallback='20')
+                self.max_queue_var.set(queue_length_str)
+                
+                duration_seconds_str = self.config.get('MusicDownloader', 'max_download_duration_seconds', fallback='600')
+                duration_minutes = int(duration_seconds_str) // 60
+                self.max_duration_var.set(str(duration_minutes))
+            else:
+                self.music_downloader_enabled_var.set(True)
+                self.max_queue_var.set('20')
+                self.max_duration_var.set('10')
+        except Exception as e:
+            print(f"CONTROL PANEL: Could not load music settings: {e}")
+    
+    def save_music_settings(self):
+        """Save Music Downloader settings to mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            
+            if not self.config.has_section('MusicDownloader'):
+                self.config.add_section('MusicDownloader')
+            
+            music_downloader_enabled_state = self.music_downloader_enabled_var.get()
+            self.config.set('MusicDownloader', 'enabled', str(music_downloader_enabled_state).lower())
+            
+            duration_minutes = int(self.max_duration_var.get())
+            duration_seconds = duration_minutes * 60
+            self.config.set('MusicDownloader', 'max_download_duration_seconds', str(duration_seconds))
+            self.config.set('MusicDownloader', 'max_queue_length', self.max_queue_var.get())
+            
+            with open("mcp_settings.ini", "w") as f:
+                self.config.write(f)
+            
+            messagebox.showinfo("Success", "Music settings saved to mcp_settings.ini!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save music settings:\n{e}")
+    
     def setup_music_requests_widgets(self, parent_frame):
         downloader_frame = ttk.LabelFrame(parent_frame, text="Song Requests", padding=10)
         downloader_frame.pack(fill="x", padx=10, pady=10)
@@ -404,8 +448,8 @@ LLM Providers:
 
         save_music_settings_button = ttk.Button(
             top_right_controls_frame,
-            text="Enable New Settings",
-            command=self.save_ini_file
+            text="Save Music Settings",
+            command=self.save_music_settings
         )
         save_music_settings_button.pack(side="left", padx=(0, 10))
 
@@ -425,6 +469,9 @@ LLM Providers:
             variable=self.music_downloader_enabled_var
         )
         enable_check.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 10))
+        
+        # Load initial values
+        self.load_music_settings()
 
         ttk.Label(downloader_frame, text="Song Title:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
         self.song_title_entry = ttk.Entry(downloader_frame, width=40)
@@ -1301,8 +1348,9 @@ TTS Notes:
         osc_sections = {'OSC'}  # OSC section now has dedicated tab
         llm_sections = {'Gemini', 'Ollama', 'OllamaCloud'}  # LLM sections now have dedicated tab
         mcp_section = {'MCP'}  # MCP section now has dedicated tab in LLM tab
+        music_sections = {'MusicDownloader'}  # MusicDownloader section now has dedicated tab
         for section in self.config.sections():
-            if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections or section in mcp_section: continue
+            if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections or section in mcp_section or section in music_sections: continue
             parent_container = section_container_map.get(section, default_container)
             if not parent_container: continue
             self.ini_entries[section] = {}
