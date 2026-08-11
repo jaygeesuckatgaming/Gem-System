@@ -867,6 +867,35 @@ async def send_to_social_stream(text_to_send: str):
     print("MCP INFO: Social broadcast done.")
 
 
+def format_opencode_response(text: str) -> str:
+    """Format OpenCode response for better readability in chat"""
+    if not text:
+        return text
+    
+    # Add spacing after punctuation for better readability
+    formatted = text
+    # Add space after periods, colons, and dashes if missing
+    formatted = formatted.replace(".", ". ")
+    formatted = formatted.replace(",", ", ")
+    formatted = replace_multiple_spaces(formatted)
+    
+    # Format YouTube video info if detected
+    if "latest video" in formatted.lower() or "video is" in formatted.lower():
+        # Try to make it more conversational
+        lines = formatted.split("-")
+        if len(lines) > 1:
+            formatted = "📹 " + lines[0].strip()
+            for i, line in enumerate(lines[1:], 1):
+                formatted += f"\n   • {line.strip()}"
+    
+    return formatted
+
+def replace_multiple_spaces(text: str) -> str:
+    """Replace multiple spaces with single space"""
+    while "  " in text:
+        text = text.replace("  ", " ")
+    return text
+
 async def send_to_tts(text_to_speak: str):
     # Check if either TTS is enabled
     styletts_enabled = config.get("styletts_enabled", False)
@@ -1592,7 +1621,9 @@ async def process_task(source: str, user_text: str, vision_context: str = "") ->
             print(f"MCP OPENCODE: Sending command: '{oc_command}'")
             try:
                 oc_result = await OPENCODE_CLIENT.execute_task(oc_command)
-                final_response = f"OpenCode: {oc_result}"
+                # Format the response for better readability
+                formatted_result = format_opencode_response(oc_result)
+                final_response = formatted_result
                 print(f"MCP OPENCODE: Result: {oc_result[:200]}...")
                 await asyncio.gather(
                     log_assistant_response(final_response, source_name="OpenCode"),
