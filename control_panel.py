@@ -268,8 +268,22 @@ class AudioApp(tk.Tk):
         ollama_cloud_url_entry = ttk.Entry(url_frame, textvariable=self.ollama_cloud_api_url_var, width=50)
         ollama_cloud_url_entry.grid(row=1, column=1, padx=5, pady=5)
         
+        # MCP Configuration section
+        mcp_frame = ttk.LabelFrame(parent_frame, text="MCP Server Configuration", padding=15)
+        mcp_frame.pack(fill="x", padx=20, pady=10)
+        
+        ttk.Label(mcp_frame, text="MCP Host:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.mcp_host_var = tk.StringVar(value="127.0.0.1")
+        mcp_host_entry = ttk.Entry(mcp_frame, textvariable=self.mcp_host_var, width=20)
+        mcp_host_entry.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        
+        ttk.Label(mcp_frame, text="MCP Port:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.mcp_port_var = tk.StringVar(value="5000")
+        mcp_port_entry = ttk.Entry(mcp_frame, textvariable=self.mcp_port_var, width=10)
+        mcp_port_entry.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        
         # Save button
-        save_btn = ttk.Button(parent_frame, text="Save LLM Settings", command=self.save_llm_settings)
+        save_btn = ttk.Button(parent_frame, text="Save LLM & MCP Settings", command=self.save_llm_settings)
         save_btn.pack(pady=15)
         
         # Info text
@@ -287,7 +301,7 @@ LLM Providers:
         self.load_llm_settings()
     
     def load_llm_settings(self):
-        """Load LLM settings from mcp_settings.ini"""
+        """Load LLM and MCP settings from mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
@@ -295,6 +309,13 @@ LLM Providers:
             if self.config.has_section('MCP'):
                 llm_choice = self.config.get('MCP', 'llm_choice', fallback='ollama')
                 self.llm_choice_var.set(llm_choice)
+                
+                # Load MCP settings
+                mcp_host = self.config.get('MCP', 'host', fallback='127.0.0.1')
+                self.mcp_host_var.set(mcp_host)
+                
+                mcp_port = self.config.get('MCP', 'port', fallback='5000')
+                self.mcp_port_var.set(mcp_port)
             
             # Load API keys
             if self.config.has_section('Gemini'):
@@ -318,14 +339,16 @@ LLM Providers:
             print(f"CONTROL PANEL: Could not load LLM settings: {e}")
     
     def save_llm_settings(self):
-        """Save LLM settings to mcp_settings.ini"""
+        """Save LLM and MCP settings to mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
-            # Save LLM choice
+            # Save LLM choice and MCP settings
             if not self.config.has_section('MCP'):
                 self.config.add_section('MCP')
             self.config.set('MCP', 'llm_choice', self.llm_choice_var.get())
+            self.config.set('MCP', 'host', self.mcp_host_var.get())
+            self.config.set('MCP', 'port', self.mcp_port_var.get())
             
             # Save API keys
             if not self.config.has_section('Gemini'):
@@ -348,7 +371,7 @@ LLM Providers:
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
             
-            messagebox.showinfo("Success", "LLM settings saved to mcp_settings.ini!")
+            messagebox.showinfo("Success", "LLM and MCP settings saved to mcp_settings.ini!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save LLM settings:\n{e}")
     
@@ -1277,8 +1300,9 @@ TTS Notes:
         tts_sections = {'StyleTTS', 'PocketTTS'}  # TTS sections now have dedicated tab
         osc_sections = {'OSC'}  # OSC section now has dedicated tab
         llm_sections = {'Gemini', 'Ollama', 'OllamaCloud'}  # LLM sections now have dedicated tab
+        mcp_section = {'MCP'}  # MCP section now has dedicated tab in LLM tab
         for section in self.config.sections():
-            if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections: continue
+            if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections or section in mcp_section: continue
             parent_container = section_container_map.get(section, default_container)
             if not parent_container: continue
             self.ini_entries[section] = {}
