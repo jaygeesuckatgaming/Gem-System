@@ -68,6 +68,11 @@ now_playing_state.txt
 StyleTTS2/models/
 StyleTTS2/checkpoints/
 
+# Pocket TTS cache (large model files from Hugging Face)
+pocket-tts/.cache/
+pocket-tts/hf_cache/
+*.safetensors
+
 # Neurosync generated data (too many small files)
 Neurosync/NeuroSync_Player/generated/
 Neurosync/NeuroSync_Local_API/utils/model/
