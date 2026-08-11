@@ -142,8 +142,14 @@ def tts():
         output_filepath = script_dir / 'server_output.wav'
         
         import soundfile as sf
+        # Ensure audio is in correct format (float32 in range [-1, 1])
+        audio_np = audio_np.astype(np.float32)
+        # Normalize to prevent clipping
+        max_val = np.max(np.abs(audio_np))
+        if max_val > 0:
+            audio_np = audio_np / max_val * 0.95
         sf.write(str(output_filepath), audio_np, sample_rate)
-        print(f"Pocket TTS: Saved audio to: {output_filepath}")
+        print(f"Pocket TTS: Saved audio to: {output_filepath} (sample_rate={sample_rate}, duration={len(audio_np)/sample_rate:.2f}s)")
         
         # Also return in response
         wav_buffer = io.BytesIO()
