@@ -205,8 +205,8 @@ def text_to_speech_get(
         raise HTTPException(status_code=400, detail="Text cannot be empty")
     
     from pathlib import Path
-    script_dir = Path(__file__).parent.parent
-    earn_lucky_path = script_dir / "StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short_mono.wav"
+    # Use absolute path to earn_lucky voice file
+    earn_lucky_path = Path(r"C:\Users\jayge\Documents\AI\Gem-System\StyleTTS2\voices\earn_lucky_pitch_minus_one_samplerate_24000_short_mono.wav")
     
     # Always use earn_lucky for Gem-System (ignore voice parameter)
     if earn_lucky_path.exists():
@@ -223,9 +223,10 @@ def text_to_speech_get(
     # Save to file for watcher_to_face
     try:
         import scipy.io.wavfile
+        from pathlib import Path as PathLib
         audio = tts_model.generate_audio(model_state, text)
         audio_np = audio.cpu().numpy()
-        output_filepath = script_dir / "server_output.wav"
+        output_filepath = PathLib(r"C:\Users\jayge\Documents\AI\Gem-System\pocket-tts\server_output.wav")
         scipy.io.wavfile.write(str(output_filepath), tts_model.sample_rate, audio_np)
         logging.info(f"Saved audio to: {output_filepath}")
     except Exception as e:
