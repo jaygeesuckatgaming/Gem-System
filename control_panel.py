@@ -99,6 +99,7 @@ class AudioApp(tk.Tk):
         self.create_widgets()
         self.populate_device_lists()
         self.populate_camera_list()
+        self.load_tts_settings()
         self.reload_ini_ui()
         self.process_audio_queues()
         self.process_video_queue()
@@ -866,6 +867,33 @@ TTS Notes:
     def run_pockettts_script(self):
         """Launch Pocket TTS server"""
         self._run_start_script("Start_PocketTTS.bat")
+    
+    def load_tts_settings(self):
+        """Load TTS settings from mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            
+            # Load StyleTTS settings
+            if self.config.has_section('StyleTTS'):
+                styletts_enabled = self.config.getboolean('StyleTTS', 'enabled', fallback=False)
+                self.styletts_enabled_var.set(styletts_enabled)
+                
+                styletts_url = self.config.get('StyleTTS', 'tts_url', fallback='http://127.0.0.1:13300/tts')
+                self.styletts_url_var.set(styletts_url)
+            
+            # Load PocketTTS settings
+            if self.config.has_section('PocketTTS'):
+                pockettts_enabled = self.config.getboolean('PocketTTS', 'enabled', fallback=False)
+                self.pockettts_enabled_var.set(pockettts_enabled)
+                
+                pockettts_url = self.config.get('PocketTTS', 'tts_url', fallback='http://127.0.0.1:13301/tts')
+                self.pockettts_url_var.set(pockettts_url)
+            
+            # Update status display
+            self.toggle_tts_engine()
+            
+        except Exception as e:
+            print(f"CONTROL PANEL: Could not load TTS settings: {e}")
     
     def save_tts_settings(self):
         """Save TTS settings to mcp_settings.ini"""
