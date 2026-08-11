@@ -204,31 +204,28 @@ def text_to_speech_get(
     if not text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
     
-    # Use provided voice, or default to earn_lucky for Gem-System
-    if voice:
-        model_state = tts_model._cached_get_state_for_audio_prompt(voice)
-        logging.info(f"Using voice from request: {voice}")
+    from pathlib import Path
+    script_dir = Path(__file__).parent.parent
+    earn_lucky_path = script_dir / "StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short_mono.wav"
+    
+    # Always use earn_lucky for Gem-System (ignore voice parameter)
+    if earn_lucky_path.exists():
+        logging.info(f"Loading earn_lucky voice cloning: {earn_lucky_path}")
+        model_state = tts_model.get_state_for_audio_prompt(earn_lucky_path, truncate=True)
+        logging.info(f"✅ Voice cloning loaded successfully")
     else:
-        # Default to earn_lucky voice cloning for Gem-System
-        from pathlib import Path
-        script_dir = Path(__file__).parent.parent
-        earn_lucky_path = script_dir / "StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short_mono.wav"
-        
-        if earn_lucky_path.exists():
-            model_state = tts_model.get_state_for_audio_prompt(earn_lucky_path, truncate=True)
-            logging.info(f"Using earn_lucky voice cloning: {earn_lucky_path}")
-        else:
-            # Fallback to default voice
-            voice_url = get_default_voice_for_language(str(tts_model.origin))
-            model_state = tts_model._cached_get_state_for_audio_prompt(voice_url)
-            logging.info(f"Using default voice: {voice_url}")
+        logging.error(f"earn_lucky file not found: {earn_lucky_path}")
+        # Fallback to default voice
+        voice_url = get_default_voice_for_language(str(tts_model.origin))
+        model_state = tts_model._cached_get_state_for_audio_prompt(voice_url)
+        logging.info(f"Using fallback default voice: {voice_url}")
     
     # Save to file for watcher_to_face
     try:
         import scipy.io.wavfile
         audio = tts_model.generate_audio(model_state, text)
         audio_np = audio.cpu().numpy()
-        output_filepath = Path(__file__).parent.parent / "server_output.wav"
+        output_filepath = script_dir / "server_output.wav"
         scipy.io.wavfile.write(str(output_filepath), tts_model.sample_rate, audio_np)
         logging.info(f"Saved audio to: {output_filepath}")
     except Exception as e:
