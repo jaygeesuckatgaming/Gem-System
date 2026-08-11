@@ -86,6 +86,7 @@ def tts():
     Supports:
     - text: The text to synthesize
     - voice: Optional voice identifier (pre-made name or file path)
+    Saves output to server_output.wav for watcher_to_face.py
     """
     try:
         model = load_model()
@@ -123,7 +124,15 @@ def tts():
         audio_np = audio.numpy()
         sample_rate = model.sample_rate
         
-        # Create WAV file in memory
+        # Save to file for watcher_to_face.py (like StyleTTS2)
+        script_dir = Path(__file__).parent
+        output_filepath = script_dir / 'server_output.wav'
+        
+        import soundfile as sf
+        sf.write(str(output_filepath), audio_np, sample_rate)
+        print(f"Pocket TTS: Saved audio to: {output_filepath}")
+        
+        # Also return in response
         wav_buffer = io.BytesIO()
         with wave.open(wav_buffer, 'wb') as wav_file:
             wav_file.setnchannels(1)  # Mono
