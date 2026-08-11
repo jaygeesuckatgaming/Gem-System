@@ -73,6 +73,9 @@ pocket-tts/.cache/
 pocket-tts/hf_cache/
 *.safetensors
 
+# DMO Speech 2 (not ready yet)
+DMOSpeech2/
+
 # Neurosync generated data (too many small files)
 Neurosync/NeuroSync_Player/generated/
 Neurosync/NeuroSync_Local_API/utils/model/
