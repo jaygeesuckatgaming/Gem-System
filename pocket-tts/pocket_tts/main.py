@@ -201,13 +201,8 @@ def text_to_speech_get(
     voice: str | None = None,
 ):
     """GET endpoint for compatibility (proxies to POST endpoint)"""
-    # Convert GET params to form data
-    form_data = {"text": text}
-    if voice:
-        form_data["voice_url"] = voice
-    
-    # Call the POST endpoint
-    return text_to_speech(**form_data)
+    # Use voice_url parameter name that POST endpoint expects
+    return text_to_speech(text=text, voice_url=voice)
 
 
 @cli_app.command()
