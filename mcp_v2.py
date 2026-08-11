@@ -1408,7 +1408,9 @@ async def process_task(source: str, user_text: str, vision_context: str = "") ->
     is_vision = any(
         t in clean_user_text.lower() for t in config["vision_trigger_words"]
     )
-    is_opencode = OPENCODE_ENABLED and clean_user_text.lower().startswith("oc ")
+    # More natural OpenCode triggers
+    opencode_triggers = ["oc ", "use oc ", "try oc ", "ask oc ", "open code ", "opencode "]
+    is_opencode = OPENCODE_ENABLED and any(clean_user_text.lower().startswith(trigger) for trigger in opencode_triggers)
     # Check for pause and play commands
     is_pause_play = any(
         phrase in clean_user_text.lower() 
@@ -1577,7 +1579,13 @@ async def process_task(source: str, user_text: str, vision_context: str = "") ->
             VISION_HISTORY.appendleft(final_response)
 
     elif is_opencode:
-        oc_command = clean_user_text[3:].strip()
+        # Extract command after trigger phrase
+        oc_command = clean_user_text.lower()
+        for trigger in opencode_triggers:
+            if oc_command.startswith(trigger):
+                oc_command = oc_command[len(trigger):].strip()
+                break
+        
         if not oc_command:
             final_response = "What should I ask OpenCode to do?"
         else:
