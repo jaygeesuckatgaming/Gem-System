@@ -42,9 +42,8 @@ mcp_settings.ini
 requests/
 background_songs/
 
-# StyleTTS2 voices (except one specific file)
-StyleTTS2/voices/*.wav
-!StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short.wav
+# StyleTTS2 voices (only ignore one specific file)
+StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short.wav
 
 # Database and logs
 *.db
