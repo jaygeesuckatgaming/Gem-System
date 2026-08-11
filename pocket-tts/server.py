@@ -77,8 +77,23 @@ def get_voice_state(voice_identifier):
     voice_path = Path(voice_identifier)
     if voice_path.exists():
         print(f"Loading voice from file: {voice_path}")
-        voice_state = model.get_state_for_audio_prompt(str(voice_path))
-        print(f"Voice cloned from: {voice_path.name}")
+        # Convert stereo to mono if needed before passing to model
+        import soundfile as sf
+        audio_data, sample_rate = sf.read(str(voice_path), dtype='float32')
+        # Convert stereo to mono by averaging channels
+        if len(audio_data.shape) > 1 and audio_data.shape[1] > 1:
+            print(f"Converting stereo to mono: {voice_path.name}")
+            audio_data = audio_data.mean(axis=1)
+        # Save as temporary mono file
+        temp_mono_path = voice_path.parent / f"_temp_mono_{voice_path.name}"
+        sf.write(str(temp_mono_path), audio_data, sample_rate)
+        voice_state = model.get_state_for_audio_prompt(str(temp_mono_path))
+        # Clean up temp file
+        try:
+            temp_mono_path.unlink()
+        except:
+            pass
+        print(f"Voice cloned from: {voice_path.name} (converted to mono)")
     else:
         # Try as pre-made voice name
         print(f"Loading pre-made voice: {voice_identifier}")
