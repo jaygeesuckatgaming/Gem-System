@@ -120,6 +120,9 @@ class AudioApp(tk.Tk):
         neurosync_tab = ttk.Frame(notebook)
         notebook.add(neurosync_tab, text="Neurosync Settings")
 
+        tts_tab = ttk.Frame(notebook)
+        notebook.add(tts_tab, text="TTS Settings")
+
         music_requests_tab = ttk.Frame(notebook)
         notebook.add(music_requests_tab, text="Music Requests")
 
@@ -139,6 +142,7 @@ class AudioApp(tk.Tk):
         self.setup_ini_widgets(right_panel)
         self.setup_vision_widgets(vision_tab)
         self.setup_neurosync_widgets(neurosync_tab)
+        self.setup_tts_widgets(tts_tab)
         self.setup_music_requests_widgets(music_requests_tab)
 
     def setup_music_requests_widgets(self, parent_frame):
@@ -751,6 +755,109 @@ class AudioApp(tk.Tk):
         self.vision_ini_container = ttk.Frame(vision_settings_frame)
         self.vision_ini_container.pack(fill="both", expand=True, pady=10, anchor="n")
 
+    def setup_tts_widgets(self, parent_frame):
+        """Setup TTS Settings tab with StyleTTS2 and Pocket TTS controls"""
+        # Main TTS selection frame
+        tts_select_frame = ttk.LabelFrame(parent_frame, text="TTS Engine Selection", padding=10)
+        tts_select_frame.pack(fill="x", padx=10, pady=10)
+        
+        # StyleTTS2 toggle
+        self.styletts_enabled_var = tk.BooleanVar(value=False)
+        styletts_check = ttk.Checkbutton(
+            tts_select_frame,
+            text="Enable StyleTTS2 (Port 13300)",
+            variable=self.styletts_enabled_var,
+            command=self.toggle_tts_engine
+        )
+        styletts_check.pack(anchor="w", pady=5)
+        
+        # Pocket TTS toggle
+        self.pockettts_enabled_var = tk.BooleanVar(value=False)
+        pockettts_check = ttk.Checkbutton(
+            tts_select_frame,
+            text="Enable Pocket TTS (Port 13301)",
+            variable=self.pockettts_enabled_var,
+            command=self.toggle_tts_engine
+        )
+        pockettts_check.pack(anchor="w", pady=5)
+        
+        # TTS URLs frame
+        url_frame = ttk.LabelFrame(parent_frame, text="TTS Server URLs", padding=10)
+        url_frame.pack(fill="x", padx=10, pady=10)
+        
+        ttk.Label(url_frame, text="StyleTTS2 URL:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.styletts_url_var = tk.StringVar(value="http://127.0.0.1:13300/tts")
+        self.styletts_url_entry = ttk.Entry(url_frame, textvariable=self.styletts_url_var, width=50)
+        self.styletts_url_entry.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        
+        ttk.Label(url_frame, text="Pocket TTS URL:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.pockettts_url_var = tk.StringVar(value="http://127.0.0.1:13301/tts")
+        self.pockettts_url_entry = ttk.Entry(url_frame, textvariable=self.pockettts_url_var, width=50)
+        self.pockettts_url_entry.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
+        
+        url_frame.grid_columnconfigure(1, weight=1)
+        
+        # Voice cloning frame
+        voice_frame = ttk.LabelFrame(parent_frame, text="Voice Cloning", padding=10)
+        voice_frame.pack(fill="x", padx=10, pady=10)
+        
+        ttk.Label(voice_frame, text="Reference Voice File:").pack(anchor="w", pady=(0, 5))
+        self.voice_file_var = tk.StringVar(value="StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short_mono.wav")
+        voice_entry = ttk.Entry(voice_frame, textvariable=self.voice_file_var, width=70)
+        voice_entry.pack(fill="x", pady=(0, 10))
+        
+        ttk.Label(voice_frame, text="Pocket TTS uses voice cloning with truncate=True for better quality.", 
+                 foreground="gray").pack(anchor="w")
+        
+        # Launch buttons
+        launch_frame = ttk.Frame(parent_frame, padding=10)
+        launch_frame.pack(fill="x", padx=10, pady=10)
+        
+        styletts_btn = ttk.Button(launch_frame, text="Start StyleTTS2", command=self.run_styletts2_script)
+        styletts_btn.pack(side="left", padx=5)
+        
+        pockettts_btn = ttk.Button(launch_frame, text="Start Pocket TTS", command=self.run_pockettts_script)
+        pockettts_btn.pack(side="left", padx=5)
+        
+        # Status info
+        status_frame = ttk.LabelFrame(parent_frame, text="TTS Status", padding=10)
+        status_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        self.tts_status_label = ttk.Label(status_frame, text="Status: Not running", foreground="gray")
+        self.tts_status_label.pack(anchor="w")
+        
+        info_text = """
+TTS Notes:
+• StyleTTS2: Original TTS system, works with custom voices
+• Pocket TTS: Faster CPU-based TTS with voice cloning support
+• Both save to server_output.wav for watcher_to_face lip-sync
+• Enable only ONE TTS engine at a time in mcp_settings.ini
+• Voice cloning requires Hugging Face authentication (hf auth login)
+"""
+        ttk.Label(status_frame, text=info_text, justify="left").pack(anchor="w", pady=10)
+    
+    def toggle_tts_engine(self):
+        """Handle TTS engine toggle - ensure only one is enabled at a time"""
+        if self.styletts_enabled_var.get() and self.pockettts_enabled_var.get():
+            # If both checked, uncheck the one that was just clicked
+            sender = self.focus_get()
+            if sender == self.styletts_url_entry or str(sender).find('styletts') != -1:
+                self.pockettts_enabled_var.set(False)
+            else:
+                self.styletts_enabled_var.set(False)
+        
+        # Update status
+        if self.styletts_enabled_var.get():
+            self.tts_status_label.config(text="Status: StyleTTS2 enabled (port 13300)", foreground="green")
+        elif self.pockettts_enabled_var.get():
+            self.tts_status_label.config(text="Status: Pocket TTS enabled (port 13301)", foreground="green")
+        else:
+            self.tts_status_label.config(text="Status: No TTS engine enabled", foreground="gray")
+    
+    def run_pockettts_script(self):
+        """Launch Pocket TTS server"""
+        self._run_start_script("Start_PocketTTS.bat")
+    
     def setup_ini_widgets(self, parent_frame):
         ini_frame = ttk.LabelFrame(parent_frame, text="mcp_settings.ini (General)")
         ini_frame.pack(fill="both", expand=True)
@@ -785,9 +892,7 @@ class AudioApp(tk.Tk):
         run_watcher_button.pack(side="left", expand=True, fill="x", padx=5)
         run_script_button = ttk.Button(button_frame, text="3. MCP", command=self.run_main_script)
         run_script_button.pack(side="left", expand=True, fill="x", padx=5)
-        run_styletts2_button = ttk.Button(button_frame, text="4. StyleTTS2", command=self.run_styletts2_script)
-        run_styletts2_button.pack(side="left", expand=True, fill="x", padx=5)
-        run_vision_button = ttk.Button(button_frame, text="5. Vision", command=self.run_vision_script)
+        run_vision_button = ttk.Button(button_frame, text="4. Vision", command=self.run_vision_script)
         run_vision_button.pack(side="left", expand=True, fill="x", padx=5)
         reload_button = ttk.Button(button_frame, text="Reload All Settings", command=self.reload_ini_ui)
         reload_button.pack(side="left", expand=True, fill="x", padx=5)
