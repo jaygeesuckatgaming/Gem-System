@@ -345,8 +345,19 @@ RAG Trigger Words Examples:
         response_length_spinbox = ttk.Spinbox(assistant_frame, textvariable=self.max_response_length_var, from_=100, to=10000, width=10)
         response_length_spinbox.grid(row=2, column=1, sticky="w", padx=5, pady=5)
         
+        # System Prompt section
+        system_prompt_frame = ttk.LabelFrame(parent_frame, text="System Prompt (LLM Persona)", padding=15)
+        system_prompt_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        
+        ttk.Label(system_prompt_frame, text="This defines the AI's personality and behavior:").pack(anchor="w", pady=(0, 5))
+        self.system_prompt_var = tk.StringVar(value="You are Gem. Your persona is a 35-year-old human woman from Pattaya, Thailand, who is a guest on a YouTube live stream.")
+        system_prompt_text = tk.Text(system_prompt_frame, height=8, width=70, wrap=tk.WORD)
+        system_prompt_text.pack(fill="both", expand=True)
+        system_prompt_text.insert("1.0", self.system_prompt_var.get())
+        self.system_prompt_widget = system_prompt_text
+        
         # Save button
-        save_btn = ttk.Button(parent_frame, text="Save LLM, MCP & Assistant Settings", command=self.save_llm_settings)
+        save_btn = ttk.Button(parent_frame, text="Save LLM, MCP, Assistant & System Prompt Settings", command=self.save_llm_settings)
         save_btn.pack(pady=15)
         
         # Info text
@@ -364,7 +375,7 @@ LLM Providers:
         self.load_llm_settings()
     
     def load_llm_settings(self):
-        """Load LLM, MCP, and Assistant settings from mcp_settings.ini"""
+        """Load LLM, MCP, Assistant, and System Prompt settings from mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
@@ -391,6 +402,14 @@ LLM Providers:
                 max_response_length = self.config.get('Assistant', 'max_response_length', fallback='2000')
                 self.max_response_length_var.set(max_response_length)
             
+            # Load System Prompt
+            if self.config.has_section('SystemPrompt'):
+                system_prompt = self.config.get('SystemPrompt', 'prompt', fallback='You are Gem.')
+                self.system_prompt_var.set(system_prompt)
+                if hasattr(self, 'system_prompt_widget'):
+                    self.system_prompt_widget.delete("1.0", tk.END)
+                    self.system_prompt_widget.insert("1.0", system_prompt)
+            
             # Load API keys
             if self.config.has_section('Gemini'):
                 api_key = self.config.get('Gemini', 'api_key', fallback='')
@@ -413,7 +432,7 @@ LLM Providers:
             print(f"CONTROL PANEL: Could not load LLM settings: {e}")
     
     def save_llm_settings(self):
-        """Save LLM, MCP, and Assistant settings to mcp_settings.ini"""
+        """Save LLM, MCP, Assistant, and System Prompt settings to mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
@@ -430,6 +449,13 @@ LLM Providers:
             self.config.set('Assistant', 'wake_words', self.wake_words_var.get())
             self.config.set('Assistant', 'command_verbs', self.command_verbs_var.get())
             self.config.set('Assistant', 'max_response_length', self.max_response_length_var.get())
+            
+            # Save System Prompt
+            if not self.config.has_section('SystemPrompt'):
+                self.config.add_section('SystemPrompt')
+            # Get text from Text widget
+            system_prompt_text = self.system_prompt_widget.get("1.0", tk.END).strip()
+            self.config.set('SystemPrompt', 'prompt', system_prompt_text)
             
             # Save API keys
             if not self.config.has_section('Gemini'):
@@ -452,7 +478,7 @@ LLM Providers:
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
             
-            messagebox.showinfo("Success", "LLM, MCP and Assistant settings saved to mcp_settings.ini!")
+            messagebox.showinfo("Success", "LLM, MCP, Assistant and System Prompt settings saved to mcp_settings.ini!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save LLM settings:\n{e}")
     
@@ -1479,7 +1505,7 @@ TTS Notes:
         osc_sections = {'OSC'}  # OSC section now has dedicated tab
         llm_sections = {'Gemini', 'Ollama', 'OllamaCloud'}  # LLM sections now have dedicated tab
         mcp_section = {'MCP'}  # MCP section now has dedicated tab in LLM tab
-        assistant_section = {'Assistant'}  # Assistant section now has dedicated tab in LLM tab
+        assistant_section = {'Assistant', 'SystemPrompt'}  # Assistant sections now have dedicated tab in LLM tab
         music_sections = {'MusicDownloader'}  # MusicDownloader section now has dedicated tab
         memory_sections = {'RAG', 'Memory', 'Database'}  # Memory sections now have dedicated tab
         for section in self.config.sections():
