@@ -112,35 +112,28 @@ class AudioApp(tk.Tk):
         notebook = ttk.Notebook(self)
         notebook.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Tab 1: Audio & General Settings (existing)
         audio_ini_tab = ttk.Frame(notebook)
-        notebook.add(audio_ini_tab, text="Audio & General")
+        notebook.add(audio_ini_tab, text="Audio & General Settings")
 
-        # Tab 2: Vision Settings (existing)
         vision_tab = ttk.Frame(notebook)
-        notebook.add(vision_tab, text="Vision")
+        notebook.add(vision_tab, text="Vision Settings")
 
-        # Tab 3: Neurosync Settings (existing)
         neurosync_tab = ttk.Frame(notebook)
-        notebook.add(neurosync_tab, text="Neurosync")
+        notebook.add(neurosync_tab, text="Neurosync Settings")
 
-        # Tab 4: TTS Settings (existing)
         tts_tab = ttk.Frame(notebook)
-        notebook.add(tts_tab, text="TTS")
+        notebook.add(tts_tab, text="TTS Settings")
 
-        # Tab 5: Music Requests (existing)
         music_requests_tab = ttk.Frame(notebook)
         notebook.add(music_requests_tab, text="Music Requests")
 
-        # Tab 6: Memory (NEW - placeholder)
+        # Add new placeholder tabs
         memory_tab = ttk.Frame(notebook)
         notebook.add(memory_tab, text="Memory")
 
-        # Tab 7: OSC (NEW - placeholder)
         osc_tab = ttk.Frame(notebook)
         notebook.add(osc_tab, text="OSC")
 
-        # Tab 8: OpenCode (NEW - placeholder)
         opencode_tab = ttk.Frame(notebook)
         notebook.add(opencode_tab, text="OpenCode")
 
@@ -166,25 +159,30 @@ class AudioApp(tk.Tk):
         self.setup_osc_widgets(osc_tab)
         self.setup_opencode_widgets(opencode_tab)
 
-        main_paned_window = tk.PanedWindow(audio_ini_tab, orient=tk.HORIZONTAL, sashrelief=tk.RAISED, bd=2)
-        main_paned_window.pack(fill="both", expand=True)
-        left_panel = ttk.Frame(main_paned_window)
-        right_panel = ttk.Frame(main_paned_window)
-        main_paned_window.add(left_panel, width=450, minsize=400)
-        main_paned_window.add(right_panel, minsize=500)
-        input_frame = ttk.LabelFrame(left_panel, text="Microphone Input (AI Hearing)", padding=(10, 5))
-        input_frame.pack(fill="x", expand=False)
-        output_frame = ttk.LabelFrame(left_panel, text="Audio Output (AI Speech)", padding=(10, 5))
-        output_frame.pack(pady=10, fill="x", expand=False)
-
-        self.setup_input_widgets(input_frame)
-        self.setup_output_widgets(output_frame)
-        self.setup_ini_widgets(right_panel)
-        self.setup_vision_widgets(vision_tab)
-        self.setup_neurosync_widgets(neurosync_tab)
-        self.setup_tts_widgets(tts_tab)
-        self.setup_music_requests_widgets(music_requests_tab)
-
+    def setup_memory_widgets(self, parent_frame):
+        """Setup Memory tab - placeholder"""
+        info_frame = ttk.LabelFrame(parent_frame, text="Memory Settings", padding=15)
+        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        ttk.Label(info_frame, text="Memory configuration coming soon.", font=('TkDefaultFont', 11)).pack(pady=10)
+        ttk.Label(info_frame, text="This tab will contain: ChromaDB settings, Cognee integration, memory management", 
+                 font=('TkDefaultFont', 9)).pack(pady=5)
+    
+    def setup_osc_widgets(self, parent_frame):
+        """Setup OSC tab - placeholder"""
+        info_frame = ttk.LabelFrame(parent_frame, text="OSC Settings", padding=15)
+        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        ttk.Label(info_frame, text="OSC configuration coming soon.", font=('TkDefaultFont', 11)).pack(pady=10)
+        ttk.Label(info_frame, text="This tab will contain: OSC server config, VMagicMirror integration", 
+                 font=('TkDefaultFont', 9)).pack(pady=5)
+    
+    def setup_opencode_widgets(self, parent_frame):
+        """Setup OpenCode tab - placeholder"""
+        info_frame = ttk.LabelFrame(parent_frame, text="OpenCode Settings", padding=15)
+        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        ttk.Label(info_frame, text="OpenCode configuration coming soon.", font=('TkDefaultFont', 11)).pack(pady=10)
+        ttk.Label(info_frame, text="This tab will contain: OpenCode server URL, browser automation settings", 
+                 font=('TkDefaultFont', 9)).pack(pady=5)
+    
     def setup_music_requests_widgets(self, parent_frame):
         downloader_frame = ttk.LabelFrame(parent_frame, text="Song Requests", padding=10)
         downloader_frame.pack(fill="x", padx=10, pady=10)
@@ -1007,64 +1005,6 @@ TTS Notes:
     def run_main_script(self): self._run_start_script("start_mcp.bat")
     def run_styletts2_script(self): self._run_start_script("Start_StyleTTS2.bat")
     def run_vision_script(self): self._run_start_script("start_vision.bat")
-    
-    def setup_memory_widgets(self, parent_frame):
-        """Setup Memory tab - placeholder for future memory/cognee settings"""
-        info_frame = ttk.LabelFrame(parent_frame, text="Memory Settings", padding=15)
-        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
-        ttk.Label(info_frame, text="Memory configuration coming soon.", 
-                 font=('TkDefaultFont', 11)).pack(pady=10)
-        ttk.Label(info_frame, text="This tab will contain:", 
-                 font=('TkDefaultFont', 10, 'bold')).pack(pady=(15, 5))
-        
-        features = [
-            "• ChromaDB memory settings",
-            "• Cognee integration",
-            "• Memory search and management",
-            "• Conversation history"
-        ]
-        for feature in features:
-            ttk.Label(info_frame, text=feature).pack(pady=2, anchor="w", padx=20)
-    
-    def setup_osc_widgets(self, parent_frame):
-        """Setup OSC tab - placeholder for OSC configuration"""
-        info_frame = ttk.LabelFrame(parent_frame, text="OSC Settings", padding=15)
-        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
-        ttk.Label(info_frame, text="OSC configuration coming soon.", 
-                 font=('TkDefaultFont', 11)).pack(pady=10)
-        ttk.Label(info_frame, text="This tab will contain:", 
-                 font=('TkDefaultFont', 10, 'bold')).pack(pady=(15, 5))
-        
-        features = [
-            "• OSC server IP and port",
-            "• OSC message routing",
-            "• VMagicMirror integration",
-            "• Trigger configurations"
-        ]
-        for feature in features:
-            ttk.Label(info_frame, text=feature).pack(pady=2, anchor="w", padx=20)
-    
-    def setup_opencode_widgets(self, parent_frame):
-        """Setup OpenCode tab - placeholder for OpenCode settings"""
-        info_frame = ttk.LabelFrame(parent_frame, text="OpenCode Settings", padding=15)
-        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        
-        ttk.Label(info_frame, text="OpenCode configuration coming soon.", 
-                 font=('TkDefaultFont', 11)).pack(pady=10)
-        ttk.Label(info_frame, text="This tab will contain:", 
-                 font=('TkDefaultFont', 10, 'bold')).pack(pady=(15, 5))
-        
-        features = [
-            "• OpenCode server URL",
-            "• Browser automation settings",
-            "• Context memory options",
-            "• Integration with Gem responses"
-        ]
-        for feature in features:
-            ttk.Label(info_frame, text=feature).pack(pady=2, anchor="w", padx=20)
-    
     def _run_start_script(self, bat_file_name):
         script_path = os.path.join(os.path.dirname(__file__), "start_scripts", bat_file_name)
         try:
