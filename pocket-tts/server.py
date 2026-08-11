@@ -141,12 +141,16 @@ def tts():
         script_dir = Path(__file__).parent
         output_filepath = script_dir / 'server_output.wav'
         
-        import soundfile as sf
-        # Convert float32 [-1, 1] to int16 for better compatibility
-        audio_int16 = (audio_np * 32767).astype(np.int16)
-        print(f"Pocket TTS: Audio shape={audio_np.shape}, dtype={audio_np.dtype}, min={audio_np.min():.3f}, max={audio_np.max():.3f}")
-        sf.write(str(output_filepath), audio_int16, sample_rate, subtype='PCM_16')
-        print(f"Pocket TTS: Saved audio to: {output_filepath} (sample_rate={sample_rate}, duration={len(audio_np)/sample_rate:.2f}s, format=PCM_16)")
+        # Save using wave module for maximum compatibility (same as HTTP response)
+        wav_filepath = str(output_filepath)
+        with wave.open(wav_filepath, 'wb') as wav_file:
+            wav_file.setnchannels(1)  # Mono
+            wav_file.setsampwidth(2)  # 16-bit (2 bytes)
+            wav_file.setframerate(sample_rate)
+            # Convert float32 [-1, 1] to int16
+            audio_int16 = (audio_np * 32767).astype(np.int16)
+            wav_file.writeframes(audio_int16.tobytes())
+        print(f"Pocket TTS: Saved audio to: {wav_filepath} (sample_rate={sample_rate}, duration={len(audio_np)/sample_rate:.2f}s, format=PCM_16, channels=1)")
         
         # Also return in response
         wav_buffer = io.BytesIO()
