@@ -194,14 +194,20 @@ def text_to_speech(
         },
     )
 
-    return StreamingResponse(
-        generate_data_with_state(text, model_state),
-        media_type="audio/wav",
-        headers={
-            "Content-Disposition": "attachment; filename=generated_speech.wav",
-            "Transfer-Encoding": "chunked",
-        },
-    )
+
+@web_app.get("/tts")
+def text_to_speech_get(
+    text: str,
+    voice: str | None = None,
+):
+    """GET endpoint for compatibility (proxies to POST endpoint)"""
+    # Convert GET params to form data
+    form_data = {"text": text}
+    if voice:
+        form_data["voice_url"] = voice
+    
+    # Call the POST endpoint
+    return text_to_speech(**form_data)
 
 
 @cli_app.command()
