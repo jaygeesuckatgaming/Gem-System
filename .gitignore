@@ -37,11 +37,14 @@ mcp_settings.ini
 # Large media files
 *.mp3
 *.mp4
-*.wav
 *.avi
 *.mov
 requests/
 background_songs/
+
+# StyleTTS2 voices (except one specific file)
+StyleTTS2/voices/*.wav
+!StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short.wav
 
 # Database and logs
 *.db
