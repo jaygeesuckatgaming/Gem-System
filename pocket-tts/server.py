@@ -77,42 +77,7 @@ def get_voice_state(voice_identifier):
     voice_path = Path(voice_identifier)
     if voice_path.exists():
         print(f"Loading voice from file: {voice_path}")
-        import soundfile as sf
-        import librosa
-        
-        # Load and preprocess audio for voice cloning
-        audio_data, sample_rate = sf.read(str(voice_path), dtype='float32')
-        
-        # Convert stereo to mono
-        if len(audio_data.shape) > 1 and audio_data.shape[1] > 1:
-            print(f"Converting stereo to mono: {voice_path.name}")
-            audio_data = audio_data.mean(axis=1)
-        
-        # Resample to model's expected sample rate if needed
-        target_sr = 24000
-        if sample_rate != target_sr:
-            print(f"Resampling from {sample_rate} to {target_sr} Hz")
-            audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=target_sr)
-            sample_rate = target_sr
-        
-        # Normalize audio levels
-        max_val = np.max(np.abs(audio_data))
-        if max_val > 0:
-            audio_data = audio_data / max_val * 0.9
-        
-        # Save preprocessed file
-        temp_path = voice_path.parent / f"_temp_cloning_{voice_path.stem}.wav"
-        sf.write(str(temp_path), audio_data, sample_rate)
-        
-        print(f"Preprocessed: {sample_rate}Hz, {len(audio_data)/sample_rate:.2f}s, mono")
-        voice_state = model.get_state_for_audio_prompt(str(temp_path))
-        
-        # Clean up temp file
-        try:
-            temp_path.unlink()
-            print(f"Cleaned up temp file")
-        except:
-            pass
+        voice_state = model.get_state_for_audio_prompt(str(voice_path))
         print(f"Voice cloned from: {voice_path.name}")
     else:
         # Try as pre-made voice name
