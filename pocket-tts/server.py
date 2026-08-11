@@ -77,8 +77,9 @@ def get_voice_state(voice_identifier):
     voice_path = Path(voice_identifier)
     if voice_path.exists():
         print(f"Loading voice from file: {voice_path}")
-        voice_state = model.get_state_for_audio_prompt(str(voice_path))
-        print(f"Voice cloned from: {voice_path.name}")
+        # Use truncate=True like the official server to handle long audio files
+        voice_state = model.get_state_for_audio_prompt(str(voice_path), truncate=True)
+        print(f"Voice cloned from: {voice_path.name} (truncated)")
     else:
         # Try as pre-made voice name
         print(f"Loading pre-made voice: {voice_identifier}")
