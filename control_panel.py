@@ -964,8 +964,9 @@ TTS Notes:
         self.sensitive_values.clear()
         section_container_map = { 'VisionService': self.vision_ini_container, 'NeurosyncLocalAPI': self.neurosync_api_scrollable_frame, 'Neurosync': self.neurosync_main_scrollable_frame, 'Watcher': self.neurosync_main_scrollable_frame, 'LiveLink': self.neurosync_main_scrollable_frame, }
         default_container = self.scrollable_frame
+        tts_sections = {'StyleTTS', 'PocketTTS'}  # TTS sections now have dedicated tab
         for section in self.config.sections():
-            if section == 'Audio': continue
+            if section == 'Audio' or section in tts_sections: continue
             parent_container = section_container_map.get(section, default_container)
             if not parent_container: continue
             self.ini_entries[section] = {}
