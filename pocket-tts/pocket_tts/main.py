@@ -200,9 +200,37 @@ def text_to_speech_get(
     text: str,
     voice: str | None = None,
 ):
-    """GET endpoint for compatibility (proxies to POST endpoint)"""
-    # Use voice_url parameter name that POST endpoint expects
-    return text_to_speech(text=text, voice_url=voice)
+    """GET endpoint for compatibility - generates audio directly"""
+    if not text.strip():
+        raise HTTPException(status_code=400, detail="Text cannot be empty")
+    
+    # Get model state
+    if voice:
+        model_state = tts_model._cached_get_state_for_audio_prompt(voice)
+    else:
+        voice_url = get_default_voice_for_language(str(tts_model.origin))
+        model_state = tts_model._cached_get_state_for_audio_prompt(voice_url)
+    
+    # Save to file for watcher_to_face
+    try:
+        import scipy.io.wavfile
+        audio = tts_model.generate_audio(model_state, text)
+        audio_np = audio.cpu().numpy()
+        from pathlib import Path
+        output_filepath = Path(__file__).parent.parent / "server_output.wav"
+        scipy.io.wavfile.write(str(output_filepath), tts_model.sample_rate, audio_np)
+        logging.info(f"Saved audio to: {output_filepath}")
+    except Exception as e:
+        logging.error(f"Failed to save audio file: {e}")
+    
+    return StreamingResponse(
+        generate_data_with_state(text, model_state),
+        media_type="audio/wav",
+        headers={
+            "Content-Disposition": "attachment; filename=generated_speech.wav",
+            "Transfer-Encoding": "chunked",
+        },
+    )
 
 
 @cli_app.command()
