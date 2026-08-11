@@ -168,12 +168,47 @@ class AudioApp(tk.Tk):
                  font=('TkDefaultFont', 9)).pack(pady=5)
     
     def setup_osc_widgets(self, parent_frame):
-        """Setup OSC tab - placeholder"""
-        info_frame = ttk.LabelFrame(parent_frame, text="OSC Settings", padding=15)
-        info_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        ttk.Label(info_frame, text="OSC configuration coming soon.", font=('TkDefaultFont', 11)).pack(pady=10)
-        ttk.Label(info_frame, text="This tab will contain: OSC server config, VMagicMirror integration", 
+        """Setup OSC tab with OSC configuration"""
+        # OSC Settings frame
+        osc_frame = ttk.LabelFrame(parent_frame, text="OSC Configuration", padding=15)
+        osc_frame.pack(fill="x", padx=20, pady=10)
+        
+        # OSC Enabled
+        self.osc_enabled_var = tk.BooleanVar(value=False)
+        osc_check = ttk.Checkbutton(osc_frame, text="Enable OSC", variable=self.osc_enabled_var)
+        osc_check.grid(row=0, column=0, columnspan=2, sticky="w", pady=5)
+        
+        # OSC IP
+        ttk.Label(osc_frame, text="OSC IP Address:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.osc_ip_var = tk.StringVar(value="127.0.0.1")
+        osc_ip_entry = ttk.Entry(osc_frame, textvariable=self.osc_ip_var, width=30)
+        osc_ip_entry.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        
+        # OSC Port
+        ttk.Label(osc_frame, text="OSC Port:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        self.osc_port_var = tk.StringVar(value="10000")
+        osc_port_entry = ttk.Entry(osc_frame, textvariable=self.osc_port_var, width=10)
+        osc_port_entry.grid(row=2, column=1, sticky="w", padx=5, pady=5)
+        
+        # OSC Address
+        ttk.Label(osc_frame, text="OSC Address:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
+        self.osc_address_var = tk.StringVar(value="/chat/message")
+        osc_address_entry = ttk.Entry(osc_frame, textvariable=self.osc_address_var, width=30)
+        osc_address_entry.grid(row=3, column=1, sticky="w", padx=5, pady=5)
+        
+        # VMagicMirror integration
+        vm_frame = ttk.LabelFrame(parent_frame, text="VMagicMirror Integration", padding=15)
+        vm_frame.pack(fill="x", padx=20, pady=10)
+        
+        ttk.Label(vm_frame, text="OSC sends blendshape data to VMagicMirror for lip-sync.",
                  font=('TkDefaultFont', 9)).pack(pady=5)
+        
+        # Save button
+        save_btn = ttk.Button(parent_frame, text="Save OSC Settings", command=self.save_osc_settings)
+        save_btn.pack(pady=10)
+        
+        # Load initial values
+        self.load_osc_settings()
     
     def setup_opencode_widgets(self, parent_frame):
         """Setup OpenCode tab - placeholder"""
@@ -932,6 +967,44 @@ TTS Notes:
         except Exception as e:
             print(f"CONTROL PANEL: Could not load TTS settings: {e}")
     
+    def load_osc_settings(self):
+        """Load OSC settings from mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            if self.config.has_section('OSC'):
+                osc_enabled = self.config.getboolean('OSC', 'enabled', fallback=False)
+                self.osc_enabled_var.set(osc_enabled)
+                
+                osc_ip = self.config.get('OSC', 'ip', fallback='127.0.0.1')
+                self.osc_ip_var.set(osc_ip)
+                
+                osc_port = self.config.get('OSC', 'port', fallback='10000')
+                self.osc_port_var.set(osc_port)
+                
+                osc_address = self.config.get('OSC', 'address', fallback='/chat/message')
+                self.osc_address_var.set(osc_address)
+        except Exception as e:
+            print(f"CONTROL PANEL: Could not load OSC settings: {e}")
+    
+    def save_osc_settings(self):
+        """Save OSC settings to mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            if not self.config.has_section('OSC'):
+                self.config.add_section('OSC')
+            
+            self.config.set('OSC', 'enabled', str(self.osc_enabled_var.get()))
+            self.config.set('OSC', 'ip', self.osc_ip_var.get())
+            self.config.set('OSC', 'port', self.osc_port_var.get())
+            self.config.set('OSC', 'address', self.osc_address_var.get())
+            
+            with open("mcp_settings.ini", "w") as f:
+                self.config.write(f)
+            
+            messagebox.showinfo("Success", "OSC settings saved to mcp_settings.ini!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save OSC settings:\n{e}")
+    
     def save_tts_settings(self):
         """Save TTS settings to mcp_settings.ini"""
         try:
@@ -1068,8 +1141,9 @@ TTS Notes:
         section_container_map = { 'VisionService': self.vision_ini_container, 'NeurosyncLocalAPI': self.neurosync_api_scrollable_frame, 'Neurosync': self.neurosync_main_scrollable_frame, 'Watcher': self.neurosync_main_scrollable_frame, 'LiveLink': self.neurosync_main_scrollable_frame, }
         default_container = self.scrollable_frame
         tts_sections = {'StyleTTS', 'PocketTTS'}  # TTS sections now have dedicated tab
+        osc_sections = {'OSC'}  # OSC section now has dedicated tab
         for section in self.config.sections():
-            if section == 'Audio' or section in tts_sections: continue
+            if section == 'Audio' or section in tts_sections or section in osc_sections: continue
             parent_container = section_container_map.get(section, default_container)
             if not parent_container: continue
             self.ini_entries[section] = {}
