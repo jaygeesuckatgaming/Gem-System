@@ -165,7 +165,7 @@ class AudioApp(tk.Tk):
         self.setup_llm_widgets(llm_tab)
 
     def setup_memory_widgets(self, parent_frame):
-        """Setup Memory tab with RAG and memory configuration"""
+        """Setup Memory tab with RAG, Database, and memory configuration"""
         # RAG Settings frame
         rag_frame = ttk.LabelFrame(parent_frame, text="RAG (Retrieval-Augmented Generation)", padding=15)
         rag_frame.pack(fill="x", padx=20, pady=10)
@@ -177,6 +177,17 @@ class AudioApp(tk.Tk):
         
         ttk.Label(rag_frame, text="Comma-separated phrases that trigger memory search").grid(row=1, column=1, sticky="w", padx=5, pady=2)
         
+        # Database Settings frame
+        db_frame = ttk.LabelFrame(parent_frame, text="Database Configuration", padding=15)
+        db_frame.pack(fill="x", padx=20, pady=10)
+        
+        ttk.Label(db_frame, text="Vector Extension Filename:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.vec_extension_var = tk.StringVar(value="vec0.dll")
+        db_entry = ttk.Entry(db_frame, textvariable=self.vec_extension_var, width=40)
+        db_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(db_frame, text="SQLite vector extension file (e.g., vec0.dll)").grid(row=1, column=1, sticky="w", padx=5, pady=2)
+        
         # Cognee/Memory Settings frame
         memory_frame = ttk.LabelFrame(parent_frame, text="Memory System", padding=15)
         memory_frame.pack(fill="x", padx=20, pady=10)
@@ -186,13 +197,14 @@ class AudioApp(tk.Tk):
         cognee_check.grid(row=0, column=0, sticky="w", padx=5, pady=5)
         
         # Save button
-        save_btn = ttk.Button(parent_frame, text="Save Memory Settings", command=self.save_memory_settings)
+        save_btn = ttk.Button(parent_frame, text="Save Memory & Database Settings", command=self.save_memory_settings)
         save_btn.pack(pady=15)
         
         # Info text
         info_text = """
 Memory Features:
 • RAG - Retrieves memories based on trigger words
+• Database - SQLite with vector extension for similarity search
 • Cognee - Advanced memory graph system (optional)
 • ChromaDB - Vector database for memory storage
 
@@ -429,7 +441,7 @@ LLM Providers:
             print(f"CONTROL PANEL: Could not load music settings: {e}")
     
     def load_memory_settings(self):
-        """Load Memory and RAG settings from mcp_settings.ini"""
+        """Load Memory, RAG, and Database settings from mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
@@ -437,6 +449,11 @@ LLM Providers:
             if self.config.has_section('RAG'):
                 rag_triggers = self.config.get('RAG', 'rag_trigger_words', fallback='remember, what did, what was, who did, tell me about, search for')
                 self.rag_trigger_words_var.set(rag_triggers)
+            
+            # Load Database settings
+            if self.config.has_section('Database'):
+                vec_extension = self.config.get('Database', 'vec_extension_filename', fallback='vec0.dll')
+                self.vec_extension_var.set(vec_extension)
             
             # Load Cognee settings
             if self.config.has_section('Memory'):
@@ -447,7 +464,7 @@ LLM Providers:
             print(f"CONTROL PANEL: Could not load memory settings: {e}")
     
     def save_memory_settings(self):
-        """Save Memory and RAG settings to mcp_settings.ini"""
+        """Save Memory, RAG, and Database settings to mcp_settings.ini"""
         try:
             self.config.read("mcp_settings.ini")
             
@@ -455,6 +472,11 @@ LLM Providers:
             if not self.config.has_section('RAG'):
                 self.config.add_section('RAG')
             self.config.set('RAG', 'rag_trigger_words', self.rag_trigger_words_var.get())
+            
+            # Save Database settings
+            if not self.config.has_section('Database'):
+                self.config.add_section('Database')
+            self.config.set('Database', 'vec_extension_filename', self.vec_extension_var.get())
             
             # Save Memory/Cognee settings
             if not self.config.has_section('Memory'):
@@ -464,7 +486,7 @@ LLM Providers:
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
             
-            messagebox.showinfo("Success", "Memory settings saved to mcp_settings.ini!")
+            messagebox.showinfo("Success", "Memory and Database settings saved to mcp_settings.ini!")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save memory settings:\n{e}")
     
@@ -1421,7 +1443,7 @@ TTS Notes:
         llm_sections = {'Gemini', 'Ollama', 'OllamaCloud'}  # LLM sections now have dedicated tab
         mcp_section = {'MCP'}  # MCP section now has dedicated tab in LLM tab
         music_sections = {'MusicDownloader'}  # MusicDownloader section now has dedicated tab
-        memory_sections = {'RAG', 'Memory'}  # Memory sections now have dedicated tab
+        memory_sections = {'RAG', 'Memory', 'Database'}  # Memory sections now have dedicated tab
         for section in self.config.sections():
             if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections or section in mcp_section or section in music_sections or section in memory_sections: continue
             parent_container = section_container_map.get(section, default_container)
