@@ -25,11 +25,21 @@ voice_cache = {}  # Cache for multiple voices
 # Load configuration
 config = configparser.ConfigParser()
 config_path = Path(__file__).parent / 'server_settings.ini'
+
+print(f"Looking for config at: {config_path}")
+print(f"Config file exists: {config_path.exists()}")
+
 if config_path.exists():
     config.read(config_path)
     print(f"Loaded config from {config_path}")
+    # Show all sections and keys
+    for section in config.sections():
+        print(f"  Section: [{section}]")
+        for key, value in config.items(section):
+            print(f"    {key} = {value}")
 else:
-    print("No server_settings.ini found, using defaults")
+    print(f"WARNING: Config file not found at {config_path}")
+    print("Using default values")
 
 def get_config_value(section, key, fallback=None):
     """Get value from config with fallback"""
