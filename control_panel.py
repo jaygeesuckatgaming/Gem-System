@@ -809,6 +809,15 @@ class AudioApp(tk.Tk):
         ttk.Label(voice_frame, text="Pocket TTS uses voice cloning with truncate=True for better quality.", 
                  foreground="gray").pack(anchor="w")
         
+        # Save button
+        save_frame = ttk.Frame(parent_frame, padding=10)
+        save_frame.pack(fill="x", padx=10, pady=5)
+        
+        save_btn = ttk.Button(save_frame, text="Save TTS Settings", command=self.save_tts_settings)
+        save_btn.pack(side="left", padx=5)
+        
+        ttk.Label(save_frame, text="(Updates mcp_settings.ini)", foreground="gray").pack(side="left", padx=10)
+        
         # Launch buttons
         launch_frame = ttk.Frame(parent_frame, padding=10)
         launch_frame.pack(fill="x", padx=10, pady=10)
@@ -857,6 +866,35 @@ TTS Notes:
     def run_pockettts_script(self):
         """Launch Pocket TTS server"""
         self._run_start_script("Start_PocketTTS.bat")
+    
+    def save_tts_settings(self):
+        """Save TTS settings to mcp_settings.ini"""
+        try:
+            # Read current config
+            self.config.read("mcp_settings.ini")
+            
+            # Update StyleTTS section
+            if not self.config.has_section('StyleTTS'):
+                self.config.add_section('StyleTTS')
+            self.config.set('StyleTTS', 'enabled', str(self.styletts_enabled_var.get()))
+            self.config.set('StyleTTS', 'tts_url', self.styletts_url_var.get())
+            
+            # Update PocketTTS section
+            if not self.config.has_section('PocketTTS'):
+                self.config.add_section('PocketTTS')
+            self.config.set('PocketTTS', 'enabled', str(self.pockettts_enabled_var.get()))
+            self.config.set('PocketTTS', 'tts_url', self.pockettts_url_var.get())
+            
+            # Save to file
+            with open("mcp_settings.ini", "w") as f:
+                self.config.write(f)
+            
+            messagebox.showinfo("Success", "TTS settings saved to mcp_settings.ini!\n\nRemember to restart MCP for changes to take effect.")
+            self.tts_status_label.config(text="Status: Settings saved!", foreground="green")
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save TTS settings:\n{e}")
+            self.tts_status_label.config(text="Status: Save failed!", foreground="red")
     
     def setup_ini_widgets(self, parent_frame):
         ini_frame = ttk.LabelFrame(parent_frame, text="mcp_settings.ini (General)")
