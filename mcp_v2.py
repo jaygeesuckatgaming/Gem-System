@@ -110,6 +110,10 @@ def load_config():
             "StyleTTS", "enabled", fallback=False
         )
         settings["styletts_url"] = config_parser.get("StyleTTS", "tts_url")
+        settings["pockettts_enabled"] = config_parser.getboolean(
+            "PocketTTS", "enabled", fallback=False
+        )
+        settings["pockettts_url"] = config_parser.get("PocketTTS", "tts_url", fallback="http://127.0.0.1:13301/tts")
         settings["gemini_api_key"] = config_parser.get("Gemini", "api_key")
         settings["gemini_model"] = config_parser.get("Gemini", "model")
         settings["ollama_model"] = config_parser.get("Ollama", "model")
@@ -864,20 +868,43 @@ async def send_to_social_stream(text_to_send: str):
 
 
 async def send_to_tts(text_to_speak: str):
-    if not config.get("styletts_enabled", False) or not text_to_speak:
+    # Check if either TTS is enabled
+    styletts_enabled = config.get("styletts_enabled", False)
+    pockettts_enabled = config.get("pockettts_enabled", False)
+    
+    if not (styletts_enabled or pockettts_enabled) or not text_to_speak:
         return
-    url = config.get("styletts_url")
+    
+    # Determine which TTS to use (Pocket TTS has priority if both enabled)
+    if pockettts_enabled:
+        url = config.get("pockettts_url", "http://127.0.0.1:13301/tts")
+        tts_name = "Pocket TTS"
+    else:
+        url = config.get("styletts_url")
+        tts_name = "StyleTTS"
+    
     clean_text = re.sub(r"[^a-zA-Z0-9\s.,?!'\"():-]", "", text_to_speak)
     clean_text = re.sub(r"\s+", " ", clean_text).strip()
     if not clean_text:
         return
-    payload = {"chatmessage": clean_text}
-    print(f"MCP INFO: Sending to TTS -> '{clean_text}'")
-    try:
-        async with httpx.AsyncClient(timeout=15) as client:
-            await client.post(url, json=payload)
-    except Exception as e:
-        print(f"MCP ERROR: TTS failed: {e}")
+    
+    # Pocket TTS uses ?text= query param, StyleTTS uses POST json
+    if pockettts_enabled:
+        tts_url = f"{url}?text={clean_text}"
+        print(f"MCP INFO: Sending to {tts_name} -> '{clean_text}'")
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                await client.get(tts_url)
+        except Exception as e:
+            print(f"MCP ERROR: {tts_name} failed: {e}")
+    else:
+        payload = {"chatmessage": clean_text}
+        print(f"MCP INFO: Sending to {tts_name} -> '{clean_text}'")
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                await client.post(url, json=payload)
+        except Exception as e:
+            print(f"MCP ERROR: {tts_name} failed: {e}")
 
 
 # Helper: Youtube check (Blocking, used in logic)
