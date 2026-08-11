@@ -134,7 +134,7 @@ def tts():
         audio = model.generate_audio(voice_state, text)
         
         # Convert to WAV format
-        audio_np = audio.numpy()
+        audio_np = audio.cpu().numpy()
         sample_rate = model.sample_rate
         
         # Save to file for watcher_to_face.py (like StyleTTS2)
@@ -142,12 +142,9 @@ def tts():
         output_filepath = script_dir / 'server_output.wav'
         
         import soundfile as sf
-        # Ensure audio is in correct format (float32 in range [-1, 1])
+        # Pocket TTS returns float32 in range [-1, 1], soundfile expects this format
         audio_np = audio_np.astype(np.float32)
-        # Normalize to prevent clipping
-        max_val = np.max(np.abs(audio_np))
-        if max_val > 0:
-            audio_np = audio_np / max_val * 0.95
+        print(f"Pocket TTS: Audio shape={audio_np.shape}, dtype={audio_np.dtype}, min={audio_np.min():.3f}, max={audio_np.max():.3f}")
         sf.write(str(output_filepath), audio_np, sample_rate)
         print(f"Pocket TTS: Saved audio to: {output_filepath} (sample_rate={sample_rate}, duration={len(audio_np)/sample_rate:.2f}s)")
         
