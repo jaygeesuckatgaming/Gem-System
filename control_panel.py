@@ -137,6 +137,10 @@ class AudioApp(tk.Tk):
         opencode_tab = ttk.Frame(notebook)
         notebook.add(opencode_tab, text="OpenCode")
 
+        # Tab 9: LLM Settings
+        llm_tab = ttk.Frame(notebook)
+        notebook.add(llm_tab, text="LLM")
+
         main_paned_window = tk.PanedWindow(audio_ini_tab, orient=tk.HORIZONTAL, sashrelief=tk.RAISED, bd=2)
         main_paned_window.pack(fill="both", expand=True)
         left_panel = ttk.Frame(main_paned_window)
@@ -158,6 +162,7 @@ class AudioApp(tk.Tk):
         self.setup_memory_widgets(memory_tab)
         self.setup_osc_widgets(osc_tab)
         self.setup_opencode_widgets(opencode_tab)
+        self.setup_llm_widgets(llm_tab)
 
     def setup_memory_widgets(self, parent_frame):
         """Setup Memory tab - placeholder"""
@@ -217,6 +222,135 @@ class AudioApp(tk.Tk):
         ttk.Label(info_frame, text="OpenCode configuration coming soon.", font=('TkDefaultFont', 11)).pack(pady=10)
         ttk.Label(info_frame, text="This tab will contain: OpenCode server URL, browser automation settings", 
                  font=('TkDefaultFont', 9)).pack(pady=5)
+    
+    def setup_llm_widgets(self, parent_frame):
+        """Setup LLM tab with LLM model selection and configuration"""
+        # LLM Selection frame
+        llm_select_frame = ttk.LabelFrame(parent_frame, text="LLM Model Selection", padding=15)
+        llm_select_frame.pack(fill="x", padx=20, pady=10)
+        
+        ttk.Label(llm_select_frame, text="Select LLM Provider:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        
+        self.llm_choice_var = tk.StringVar(value="ollama")
+        llm_options = ["gemini", "ollama", "ollama_vision", "ollama_cloud", "minitron"]
+        llm_combo = ttk.Combobox(llm_select_frame, textvariable=self.llm_choice_var, values=llm_options, state="readonly", width=20)
+        llm_combo.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        
+        # API Keys frame
+        api_frame = ttk.LabelFrame(parent_frame, text="API Keys", padding=15)
+        api_frame.pack(fill="x", padx=20, pady=10)
+        
+        # Gemini API Key
+        ttk.Label(api_frame, text="Gemini API Key:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.gemini_api_key_var = tk.StringVar()
+        gemini_entry = ttk.Entry(api_frame, textvariable=self.gemini_api_key_var, show="*", width=40)
+        gemini_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        # Ollama Cloud API Key
+        ttk.Label(api_frame, text="Ollama Cloud API Key:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.ollama_cloud_api_key_var = tk.StringVar()
+        ollama_cloud_entry = ttk.Entry(api_frame, textvariable=self.ollama_cloud_api_key_var, show="*", width=40)
+        ollama_cloud_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        # Model URLs frame
+        url_frame = ttk.LabelFrame(parent_frame, text="Model URLs", padding=15)
+        url_frame.pack(fill="x", padx=20, pady=10)
+        
+        # Ollama API URL
+        ttk.Label(url_frame, text="Ollama API URL:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.ollama_api_url_var = tk.StringVar(value="http://localhost:11434/api/chat")
+        ollama_url_entry = ttk.Entry(url_frame, textvariable=self.ollama_api_url_var, width=50)
+        ollama_url_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        # Ollama Cloud API URL
+        ttk.Label(url_frame, text="Ollama Cloud API URL:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.ollama_cloud_api_url_var = tk.StringVar(value="https://ollama.com/api/chat")
+        ollama_cloud_url_entry = ttk.Entry(url_frame, textvariable=self.ollama_cloud_api_url_var, width=50)
+        ollama_cloud_url_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        # Save button
+        save_btn = ttk.Button(parent_frame, text="Save LLM Settings", command=self.save_llm_settings)
+        save_btn.pack(pady=15)
+        
+        # Info text
+        info_text = """
+LLM Providers:
+• gemini - Google Gemini API
+• ollama - Local Ollama server
+• ollama_vision - Ollama with vision capabilities
+• ollama_cloud - Ollama cloud service
+• minitron - Minitron model
+"""
+        ttk.Label(parent_frame, text=info_text, justify="left", font=('TkDefaultFont', 9)).pack(pady=10, padx=20)
+        
+        # Load initial values
+        self.load_llm_settings()
+    
+    def load_llm_settings(self):
+        """Load LLM settings from mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            
+            # Load LLM choice
+            if self.config.has_section('MCP'):
+                llm_choice = self.config.get('MCP', 'llm_choice', fallback='ollama')
+                self.llm_choice_var.set(llm_choice)
+            
+            # Load API keys
+            if self.config.has_section('Gemini'):
+                api_key = self.config.get('Gemini', 'api_key', fallback='')
+                self.gemini_api_key_var.set(api_key)
+            
+            if self.config.has_section('OllamaCloud'):
+                api_key = self.config.get('OllamaCloud', 'api_key', fallback='')
+                self.ollama_cloud_api_key_var.set(api_key)
+            
+            # Load API URLs
+            if self.config.has_section('Ollama'):
+                api_url = self.config.get('Ollama', 'api_url', fallback='http://localhost:11434/api/chat')
+                self.ollama_api_url_var.set(api_url)
+            
+            if self.config.has_section('OllamaCloud'):
+                api_url = self.config.get('OllamaCloud', 'api_url', fallback='https://ollama.com/api/chat')
+                self.ollama_cloud_api_url_var.set(api_url)
+                
+        except Exception as e:
+            print(f"CONTROL PANEL: Could not load LLM settings: {e}")
+    
+    def save_llm_settings(self):
+        """Save LLM settings to mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            
+            # Save LLM choice
+            if not self.config.has_section('MCP'):
+                self.config.add_section('MCP')
+            self.config.set('MCP', 'llm_choice', self.llm_choice_var.get())
+            
+            # Save API keys
+            if not self.config.has_section('Gemini'):
+                self.config.add_section('Gemini')
+            self.config.set('Gemini', 'api_key', self.gemini_api_key_var.get())
+            
+            if not self.config.has_section('OllamaCloud'):
+                self.config.add_section('OllamaCloud')
+            self.config.set('OllamaCloud', 'api_key', self.ollama_cloud_api_key_var.get())
+            
+            # Save API URLs
+            if not self.config.has_section('Ollama'):
+                self.config.add_section('Ollama')
+            self.config.set('Ollama', 'api_url', self.ollama_api_url_var.get())
+            
+            if not self.config.has_section('OllamaCloud'):
+                self.config.add_section('OllamaCloud')
+            self.config.set('OllamaCloud', 'api_url', self.ollama_cloud_api_url_var.get())
+            
+            with open("mcp_settings.ini", "w") as f:
+                self.config.write(f)
+            
+            messagebox.showinfo("Success", "LLM settings saved to mcp_settings.ini!")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save LLM settings:\n{e}")
     
     def setup_music_requests_widgets(self, parent_frame):
         downloader_frame = ttk.LabelFrame(parent_frame, text="Song Requests", padding=10)
@@ -1142,8 +1276,9 @@ TTS Notes:
         default_container = self.scrollable_frame
         tts_sections = {'StyleTTS', 'PocketTTS'}  # TTS sections now have dedicated tab
         osc_sections = {'OSC'}  # OSC section now has dedicated tab
+        llm_sections = {'Gemini', 'Ollama', 'OllamaCloud'}  # LLM sections now have dedicated tab
         for section in self.config.sections():
-            if section == 'Audio' or section in tts_sections or section in osc_sections: continue
+            if section == 'Audio' or section in tts_sections or section in osc_sections or section in llm_sections: continue
             parent_container = section_container_map.get(section, default_container)
             if not parent_container: continue
             self.ini_entries[section] = {}
