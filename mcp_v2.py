@@ -872,29 +872,45 @@ def format_opencode_response(text: str) -> str:
     if not text:
         return text
     
-    # Add spacing after punctuation for better readability
-    formatted = text
-    # Add space after periods, colons, and dashes if missing
-    formatted = formatted.replace(".", ". ")
-    formatted = formatted.replace(",", ", ")
-    formatted = replace_multiple_spaces(formatted)
+    # Remove the OpenCode: prefix and quotes if present
+    formatted = text.strip()
+    if formatted.startswith('OpenCode:'):
+        formatted = formatted[9:].strip()
+    formatted = formatted.strip('"')
+    
+    # Fix word splitting (remove newlines between words)
+    # Replace newlines that aren't paragraph breaks with spaces
+    lines = formatted.split('\n')
+    cleaned_lines = []
+    for line in lines:
+        line = line.strip()
+        if line:
+            cleaned_lines.append(line)
+    
+    # Join with single spaces, preserve intentional paragraph breaks
+    formatted = ' '.join(cleaned_lines)
+    
+    # Fix spacing around punctuation
+    formatted = formatted.replace('  ', ' ')
+    formatted = formatted.replace('. ', '.')
+    formatted = formatted.replace('.  ', '. ')
+    formatted = formatted.replace('? ', '?')
+    formatted = formatted.replace('! ', '!')
+    
+    # Capitalize first letter
+    if formatted:
+        formatted = formatted[0].upper() + formatted[1:]
     
     # Format YouTube video info if detected
     if "latest video" in formatted.lower() or "video is" in formatted.lower():
         # Try to make it more conversational
-        lines = formatted.split("-")
-        if len(lines) > 1:
-            formatted = "📹 " + lines[0].strip()
-            for i, line in enumerate(lines[1:], 1):
-                formatted += f"\n   • {line.strip()}"
+        parts = formatted.split("-")
+        if len(parts) > 1:
+            formatted = "📹 " + parts[0].strip()
+            for part in parts[1:]:
+                formatted += f"\n   • {part.strip()}"
     
     return formatted
-
-def replace_multiple_spaces(text: str) -> str:
-    """Replace multiple spaces with single space"""
-    while "  " in text:
-        text = text.replace("  ", " ")
-    return text
 
 async def send_to_tts(text_to_speak: str):
     # Check if either TTS is enabled
