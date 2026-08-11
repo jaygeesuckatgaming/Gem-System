@@ -300,17 +300,27 @@ RAG Trigger Words Examples:
         url_frame = ttk.LabelFrame(parent_frame, text="Model URLs", padding=15)
         url_frame.pack(fill="x", padx=20, pady=10)
         
-        # Ollama API URL
+        # Ollama API URL and Model
         ttk.Label(url_frame, text="Ollama API URL:").grid(row=0, column=0, sticky="w", padx=5, pady=5)
         self.ollama_api_url_var = tk.StringVar(value="http://localhost:11434/api/chat")
         ollama_url_entry = ttk.Entry(url_frame, textvariable=self.ollama_api_url_var, width=50)
         ollama_url_entry.grid(row=0, column=1, padx=5, pady=5)
         
-        # Ollama Cloud API URL
-        ttk.Label(url_frame, text="Ollama Cloud API URL:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        ttk.Label(url_frame, text="Local Ollama Model:").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.ollama_model_var = tk.StringVar(value="gemma3:4b-it-qat")
+        ollama_model_entry = ttk.Entry(url_frame, textvariable=self.ollama_model_var, width=30)
+        ollama_model_entry.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        
+        # Ollama Cloud API URL and Model
+        ttk.Label(url_frame, text="Ollama Cloud API URL:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
         self.ollama_cloud_api_url_var = tk.StringVar(value="https://ollama.com/api/chat")
         ollama_cloud_url_entry = ttk.Entry(url_frame, textvariable=self.ollama_cloud_api_url_var, width=50)
-        ollama_cloud_url_entry.grid(row=1, column=1, padx=5, pady=5)
+        ollama_cloud_url_entry.grid(row=2, column=1, padx=5, pady=5)
+        
+        ttk.Label(url_frame, text="Ollama Cloud Model:").grid(row=3, column=0, sticky="w", padx=5, pady=5)
+        self.ollama_cloud_model_var = tk.StringVar(value="gemma4:31b-cloud")
+        ollama_cloud_model_entry = ttk.Entry(url_frame, textvariable=self.ollama_cloud_model_var, width=30)
+        ollama_cloud_model_entry.grid(row=3, column=1, sticky="w", padx=5, pady=5)
         
         # MCP Configuration section
         mcp_frame = ttk.LabelFrame(parent_frame, text="MCP Server Configuration", padding=15)
@@ -364,10 +374,15 @@ RAG Trigger Words Examples:
         info_text = """
 LLM Providers:
 • gemini - Google Gemini API
-• ollama - Local Ollama server
+• ollama - Local Ollama server (configure model in Ollama section below)
 • ollama_vision - Ollama with vision capabilities
-• ollama_cloud - Ollama cloud service
+• ollama_cloud - Ollama cloud service (default: gemma4:31b-cloud)
 • minitron - Minitron model
+
+Popular Ollama Cloud Models:
+• gemma4:31b-cloud - Google Gemma 4 31B
+• llama3:70b - Meta Llama 3 70B
+• qwen2.5:72b - Alibaba Qwen 2.5 72B
 """
         ttk.Label(parent_frame, text=info_text, justify="left", font=('TkDefaultFont', 9)).pack(pady=10, padx=20)
         
@@ -423,10 +438,18 @@ LLM Providers:
             if self.config.has_section('Ollama'):
                 api_url = self.config.get('Ollama', 'api_url', fallback='http://localhost:11434/api/chat')
                 self.ollama_api_url_var.set(api_url)
+                
+                # Load local Ollama model
+                ollama_model = self.config.get('Ollama', 'model', fallback='gemma3:4b-it-qat')
+                self.ollama_model_var.set(ollama_model)
             
             if self.config.has_section('OllamaCloud'):
                 api_url = self.config.get('OllamaCloud', 'api_url', fallback='https://ollama.com/api/chat')
                 self.ollama_cloud_api_url_var.set(api_url)
+                
+                # Load Ollama Cloud model
+                ollama_cloud_model = self.config.get('OllamaCloud', 'model', fallback='gemma4:31b-cloud')
+                self.ollama_cloud_model_var.set(ollama_cloud_model)
                 
         except Exception as e:
             print(f"CONTROL PANEL: Could not load LLM settings: {e}")
@@ -466,14 +489,16 @@ LLM Providers:
                 self.config.add_section('OllamaCloud')
             self.config.set('OllamaCloud', 'api_key', self.ollama_cloud_api_key_var.get())
             
-            # Save API URLs
+            # Save API URLs and Models
             if not self.config.has_section('Ollama'):
                 self.config.add_section('Ollama')
             self.config.set('Ollama', 'api_url', self.ollama_api_url_var.get())
+            self.config.set('Ollama', 'model', self.ollama_model_var.get())
             
             if not self.config.has_section('OllamaCloud'):
                 self.config.add_section('OllamaCloud')
             self.config.set('OllamaCloud', 'api_url', self.ollama_cloud_api_url_var.get())
+            self.config.set('OllamaCloud', 'model', self.ollama_cloud_model_var.get())
             
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
