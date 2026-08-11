@@ -95,14 +95,14 @@ def tts():
         text = request.args.get('text', '')
         voice = request.args.get('voice', None)
         
-        # Also check POST JSON body
+        # Also check POST JSON body (MCP sends {"chatmessage": "..."})
         if not text and request.is_json:
-            text = request.json.get('text', '')
+            text = request.json.get('text', '') or request.json.get('chatmessage', '')
             voice = request.json.get('voice', None)
         
         # Check form data
         if not text and request.form:
-            text = request.form.get('text', '')
+            text = request.form.get('text', '') or request.form.get('chatmessage', '')
             voice = request.form.get('voice', None)
         
         if not text:
@@ -111,6 +111,9 @@ def tts():
         # Use default voice from config if not specified
         if not voice:
             voice = get_config_value('TTS', 'reference_voice', 'alba')
+            print(f"Using default voice from config: {voice}")
+        else:
+            print(f"Using voice from request: {voice}")
         
         print(f"Pocket TTS: Generating speech for '{text[:50]}...' with voice '{voice}'")
         
@@ -267,8 +270,11 @@ if __name__ == '__main__':
     print(f"Starting Pocket TTS server on {args.host}:{args.port}")
     
     default_voice = get_config_value('TTS', 'reference_voice', 'alba')
+    print(f"=" * 60)
     print(f"Default reference voice: {default_voice}")
-    print("Voice cloning enabled: You can use any .wav file path as voice identifier")
+    print(f"Config file: {config_path}")
+    print(f"Voice cloning enabled: You can use any .wav file path as voice identifier")
+    print(f"=" * 60)
     print("Endpoints:")
     print("  GET/POST /tts?text=...&voice=... - Generate speech (voice optional)")
     print("  POST /tts/stream - Stream speech")
