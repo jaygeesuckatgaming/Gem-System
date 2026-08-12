@@ -10,7 +10,7 @@ from pathlib import Path
 import pygame
 
 # Configuration
-WATCH_FOLDER = Path(__file__).parent / "pocket-tts"  # Or StyleTTS2, or your TTS output folder
+WATCH_FOLDER = Path(__file__).parent / "StyleTTS2"  # Change to: pocket-tts, StyleTTS2, etc.
 AUDIO_FILE = WATCH_FOLDER / "server_output.wav"
 CHECK_INTERVAL = 0.5  # Check every 0.5 seconds
 
