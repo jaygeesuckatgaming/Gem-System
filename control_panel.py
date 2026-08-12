@@ -34,7 +34,7 @@ class AudioApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Master Control Panel")
-        self.geometry("1400x880")
+        self.geometry("1400x950")
 
         # Configure pygame/SDL to use the selected output device
         try:
@@ -275,18 +275,27 @@ RAG Trigger Words Examples:
         url_entry = ttk.Entry(server_frame, textvariable=self.opencode_url_var, width=40)
         url_entry.grid(row=1, column=1, sticky="w", padx=5, pady=5)
         
+        # LLM Model selection
+        ttk.Label(server_frame, text="LLM Model:").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        self.opencode_model_var = tk.StringVar(value="ollama/gemma3:4b-it-qat")
+        model_entry = ttk.Entry(server_frame, textvariable=self.opencode_model_var, width=40)
+        model_entry.grid(row=2, column=1, sticky="w", padx=5, pady=5)
+        ttk.Label(server_frame, text="Format: provider/model (e.g., ollama/gemma3:4b-it-qat)", 
+                 font=('TkDefaultFont', 8), foreground="gray").grid(row=3, column=1, sticky="w", padx=5, pady=2)
+        
         # Launch button
         launch_btn = ttk.Button(server_frame, text="Start OpenCode Server", command=self.run_opencode_server)
-        launch_btn.grid(row=2, column=1, sticky="w", padx=5, pady=10)
+        launch_btn.grid(row=4, column=1, sticky="w", padx=5, pady=10)
+        
+        # Save button
+        save_btn = ttk.Button(server_frame, text="Save Model Settings", command=self.save_opencode_settings)
+        save_btn.grid(row=4, column=0, sticky="w", padx=5, pady=10)
+        
+        self.opencode_model_var.trace_add("write", lambda *args: self.save_opencode_settings())
         
         # Configuration frame
         config_frame = ttk.LabelFrame(parent_frame, text="OpenCode Configuration", padding=15)
         config_frame.pack(fill="both", expand=True, padx=20, pady=10)
-        
-        ttk.Label(config_frame, text="OpenCode server configuration coming soon.", 
-                 font=('TkDefaultFont', 11)).pack(pady=10)
-        ttk.Label(config_frame, text="This section will contain: Browser automation settings, context memory options", 
-                 font=('TkDefaultFont', 9)).pack(pady=5)
         
         # Info text
         info_text = """
@@ -300,8 +309,17 @@ Server Info:
 • Default URL: http://localhost:4096
 • Uses Chrome DevTools MCP protocol
 • Requires Chrome browser running
+
+Model Options:
+• ollama/gemma3:4b-it-qat - Local Ollama
+• ollama/llama3:70b - Local Ollama Llama 3
+• opencode/gpt-5.1-codex - OpenCode Zen
+• anthropic/claude-sonnet-4-5-20250929 - Anthropic
 """
         ttk.Label(parent_frame, text=info_text, justify="left", font=('TkDefaultFont', 9)).pack(pady=10, padx=20)
+        
+        # Load settings
+        self.load_opencode_settings()
     
     def setup_llm_widgets(self, parent_frame):
         """Setup LLM tab with LLM model selection and configuration"""
@@ -315,6 +333,7 @@ Server Info:
         llm_options = ["gemini", "ollama", "ollama_vision", "ollama_cloud", "minitron"]
         llm_combo = ttk.Combobox(llm_select_frame, textvariable=self.llm_choice_var, values=llm_options, state="readonly", width=20)
         llm_combo.grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        llm_combo.bind("<<ComboboxSelected>>", lambda e: self.save_llm_settings())
         
         # API Keys frame
         api_frame = ttk.LabelFrame(parent_frame, text="API Keys", padding=15)
@@ -397,7 +416,7 @@ Server Info:
         
         ttk.Label(system_prompt_frame, text="This defines the AI's personality and behavior:").pack(anchor="w", pady=(0, 5))
         self.system_prompt_var = tk.StringVar(value="You are Gem. Your persona is a 35-year-old human woman from Pattaya, Thailand, who is a guest on a YouTube live stream.")
-        system_prompt_text = tk.Text(system_prompt_frame, height=8, width=70, wrap=tk.WORD)
+        system_prompt_text = tk.Text(system_prompt_frame, height=20, width=100, wrap=tk.WORD, font=('Consolas', 10))
         system_prompt_text.pack(fill="both", expand=True)
         system_prompt_text.insert("1.0", self.system_prompt_var.get())
         self.system_prompt_widget = system_prompt_text
@@ -1275,6 +1294,8 @@ Popular Ollama Cloud Models:
             command=self.toggle_tts_engine
         )
         pockettts_check.pack(anchor="w", pady=5)
+        # Auto-save when toggled
+        self.pockettts_enabled_var.trace_add("write", lambda *args: self.save_tts_settings())
         
         # TTS URLs frame
         url_frame = ttk.LabelFrame(parent_frame, text="TTS Server URLs", padding=10)
@@ -1455,8 +1476,8 @@ TTS Notes:
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
             
-            messagebox.showinfo("Success", "TTS settings saved to mcp_settings.ini!\n\nRemember to restart MCP for changes to take effect.")
             self.tts_status_label.config(text="Status: Settings saved!", foreground="green")
+            print("CONTROL PANEL: TTS settings saved to mcp_settings.ini")
             
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save TTS settings:\n{e}")
@@ -1488,7 +1509,7 @@ TTS Notes:
         
         button_frame = ttk.Frame(parent_frame)
         button_frame.pack(fill="x", pady=(5,0))
-        save_button = ttk.Button(button_frame, text="Save All Settings", command=self.save_ini_file)
+        save_button = ttk.Button(button_frame, text="Save All Settings", command=self.save_all_settings)
         save_button.pack(side="left", expand=True, fill="x", padx=5)
         run_neurosync_button = ttk.Button(button_frame, text="1. Neurosync Local API", command=self.run_neurosync_api_script)
         run_neurosync_button.pack(side="left", expand=True, fill="x", padx=5)
@@ -1507,18 +1528,58 @@ TTS Notes:
     def run_styletts2_script(self): self._run_start_script("Start_StyleTTS2.bat")
     def run_vision_script(self): self._run_start_script("start_vision.bat")
     def run_opencode_server(self):
-        """Launch OpenCode server"""
-        self._run_start_script("start_OpenCode_Server.bat")
-        self.opencode_status_var.set("Starting...")
-        messagebox.showinfo("OpenCode Server", "Starting OpenCode server...\n\nCheck the console window for status.")
+        """Launch OpenCode server with selected model"""
+        model = self.opencode_model_var.get()
+        print(f"OPENCODE: Starting server with model: {model}")
+        self._run_start_script("Start_OpenCode_Server.bat")
+        self.opencode_status_var.set(f"Starting ({model})...")
+    
+    def save_opencode_settings(self):
+        """Save OpenCode settings to mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            if not self.config.has_section('OpenCode'):
+                self.config.add_section('OpenCode')
+            self.config.set('OpenCode', 'model', self.opencode_model_var.get())
+            self.config.set('OpenCode', 'url', self.opencode_url_var.get())
+            with open("mcp_settings.ini", "w") as f:
+                self.config.write(f)
+            print("CONTROL PANEL: OpenCode settings saved")
+        except Exception as e:
+            print(f"CONTROL PANEL: Error saving OpenCode settings: {e}")
+    
+    def load_opencode_settings(self):
+        """Load OpenCode settings from mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            if self.config.has_section('OpenCode'):
+                model = self.config.get('OpenCode', 'model', fallback='ollama/gemma3:4b-it-qat')
+                url = self.config.get('OpenCode', 'url', fallback='http://localhost:4096')
+                self.opencode_model_var.set(model)
+                self.opencode_url_var.set(url)
+        except Exception as e:
+            print(f"CONTROL PANEL: Error loading OpenCode settings: {e}")
+    
     def run_audio_player(self):
         """Launch Audio Player for auto TTS playback"""
-        self._run_start_script("start_scripts/Start_Audio_Player.bat")
-        messagebox.showinfo("Audio Player", "Starting Audio Player...\n\nMonitoring tts_output/ folder for auto-playback.\nPress Ctrl+C to stop.")
+        self._run_start_script("Start_Audio_Player.bat")
+        print("CONTROL PANEL: Audio Player started - monitoring tts_output/ folder")
     def _run_start_script(self, bat_file_name):
-        script_path = os.path.join(os.path.dirname(__file__), "start_scripts", bat_file_name)
+        # Get absolute path to start_scripts folder
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        scripts_dir = os.path.join(base_dir, "start_scripts")
+        script_path = os.path.join(scripts_dir, bat_file_name)
+        
+        print(f"DEBUG: __file__ = {__file__}")
+        print(f"DEBUG: base_dir = {base_dir}")
+        print(f"DEBUG: scripts_dir = {scripts_dir}")
+        print(f"DEBUG: script_path = {script_path}")
+        print(f"DEBUG: Script exists: {os.path.exists(script_path)}")
+        
         try:
-            subprocess.Popen(script_path, creationflags=subprocess.CREATE_NEW_CONSOLE)
+            if not os.path.exists(script_path):
+                raise FileNotFoundError(f"Script not found: {script_path}")
+            subprocess.Popen(["cmd", "/c", script_path], creationflags=subprocess.CREATE_NEW_CONSOLE, cwd=scripts_dir)
         except Exception as e:
             messagebox.showerror("Error", f"Could not launch script:\n{e}")
 
@@ -1638,6 +1699,32 @@ TTS Notes:
         except Exception as e:
             print(f"CONTROL PANEL ERROR: An unexpected error occurred during live update: {e}")
 
+    def save_all_settings(self):
+        """Save ALL settings from all tabs to mcp_settings.ini"""
+        print("CONTROL PANEL: Saving all settings from all tabs...")
+        
+        # Save settings from all tabs
+        try: self.save_llm_settings()
+        except Exception as e: print(f"Warning: Could not save LLM settings: {e}")
+        
+        try: self.save_memory_settings()
+        except Exception as e: print(f"Warning: Could not save memory settings: {e}")
+        
+        try: self.save_music_settings()
+        except Exception as e: print(f"Warning: Could not save music settings: {e}")
+        
+        try: self.save_osc_settings()
+        except Exception as e: print(f"Warning: Could not save OSC settings: {e}")
+        
+        try: self.save_tts_settings()
+        except Exception as e: print(f"Warning: Could not save TTS settings: {e}")
+        
+        # Save audio/general settings
+        self.save_ini_file()
+        
+        print("CONTROL PANEL: All settings saved successfully!")
+        messagebox.showinfo("Success", "ALL settings saved from all tabs!\n\nRemember to restart MCP for changes to take effect.")
+    
     def save_ini_file(self):
         music_downloader_enabled_state = self.music_downloader_enabled_var.get()
         

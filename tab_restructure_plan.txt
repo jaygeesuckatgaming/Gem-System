@@ -1,0 +1,36 @@
+Control Panel Tab Restructure Plan
+=====================================
+
+NEW TAB ORDER:
+1. General - LLM model selection, general MCP settings
+2. LLM - LLM-specific settings (API keys, models)
+3. Memory - Memory/cognee settings
+4. TTS - TTS engine selection (StyleTTS2, Pocket TTS)
+5. Audio - Audio input/output devices, levels
+6. Neurosync - Neurosync Local API + Watcher settings
+7. Vision - Camera, SmolVLM settings
+8. OSC - OSC configuration
+9. Music Requests - Song downloader, player
+10. OpenCode - OpenCode integration settings
+
+EXISTING CONTENT MAPPING:
+- "Audio & General Settings" tab → Split into:
+  - Audio devices → Audio tab
+  - INI settings (MCP, LLM) → General + LLM tabs
+- "Vision Settings" → Vision tab (keep as-is)
+- "Neurosync Settings" → Neurosync tab (keep as-is)
+- "TTS Settings" → TTS tab (keep as-is)
+- "Music Requests" → Music Requests tab (keep as-is)
+
+NEW TABS TO CREATE:
+- Memory tab - Cognee/memory settings
+- OSC tab - OSC configuration
+- OpenCode tab - OpenCode settings
+
+IMPLEMENTATION:
+Since the Control Panel has many interdependencies, the safest approach is to:
+1. Keep existing tab content functions where they are
+2. Create new tab frames in correct order
+3. Route existing setup functions to new tabs
+4. Create stub functions for new empty tabs (Memory, OSC, OpenCode)
+5. Move INI sections to appropriate tabs

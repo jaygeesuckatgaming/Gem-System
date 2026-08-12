@@ -1,0 +1,13 @@
+{
+    "$schema":  "https://opencode.ai/config.json",
+    "providers":  {
+                      "ollama":  {
+                                     "models":  {
+                                                    "lfm2.5:latest":  {
+
+                                                                      }
+                                                }
+                                 }
+                  },
+    "model":  "ollama/lfm2.5:latest"
+}

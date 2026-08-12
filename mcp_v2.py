@@ -339,17 +339,17 @@ except Exception as e:
 
 geolocator = None
 tf = None
-geolocator = None
-tf = None
 try:
     tf = TimezoneFinder()
-    print("MCP INFO: TimezoneFinder initialized.")
+    print("MCP INFO: TimezoneFinder initialized successfully.")
 except Exception as e:
     print(f"MCP WARNING: TimezoneFinder failed: {e}")
+    tf = None
 
-# Geolocator disabled due to SSL issues - using fallback
-print("MCP INFO: Geocoding disabled (SSL issues). Using fallback location.")
-print("MCP WARNING: Time queries will fail. Check your internet connection.")
+# Geolocator disabled due to SSL issues - using fallback location.
+# Only show warning if timezonefinder actually failed
+if tf is None:
+    print("MCP WARNING: Time queries may fail. TimezoneFinder not available.")
 
 
 # ASYNC: Made async to use httpx
