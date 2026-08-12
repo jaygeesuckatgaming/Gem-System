@@ -1323,12 +1323,18 @@ Popular Ollama Cloud Models:
         pockettts_btn = ttk.Button(launch_frame, text="Start Pocket TTS", command=self.run_pockettts_script)
         pockettts_btn.pack(side="left", padx=5)
         
+        audio_player_btn = ttk.Button(launch_frame, text="Start Audio Player", command=self.run_audio_player)
+        audio_player_btn.pack(side="left", padx=5)
+        
         # Status info
         status_frame = ttk.LabelFrame(parent_frame, text="TTS Status", padding=10)
         status_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
         self.tts_status_label = ttk.Label(status_frame, text="Status: Not running", foreground="gray")
         self.tts_status_label.pack(anchor="w")
+        
+        ttk.Label(status_frame, text="Audio Player monitors tts_output/ folder for auto-playback", 
+                 foreground="gray", font=('TkDefaultFont', 9)).pack(anchor="w", pady=(5, 0))
         
         info_text = """
 TTS Notes:
@@ -1502,9 +1508,13 @@ TTS Notes:
     def run_vision_script(self): self._run_start_script("start_vision.bat")
     def run_opencode_server(self):
         """Launch OpenCode server"""
-        self._run_start_script("start_opencode.bat")
+        self._run_start_script("start_OpenCode_Server.bat")
         self.opencode_status_var.set("Starting...")
         messagebox.showinfo("OpenCode Server", "Starting OpenCode server...\n\nCheck the console window for status.")
+    def run_audio_player(self):
+        """Launch Audio Player for auto TTS playback"""
+        self._run_start_script("start_scripts/Start_Audio_Player.bat")
+        messagebox.showinfo("Audio Player", "Starting Audio Player...\n\nMonitoring tts_output/ folder for auto-playback.\nPress Ctrl+C to stop.")
     def _run_start_script(self, bat_file_name):
         script_path = os.path.join(os.path.dirname(__file__), "start_scripts", bat_file_name)
         try:
