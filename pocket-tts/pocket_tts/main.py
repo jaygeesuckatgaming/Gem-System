@@ -170,18 +170,20 @@ def text_to_speech(
     else:
         raise HTTPException(status_code=500, detail="This should never happen.")
 
-    # Save to server_output.wav for watcher_to_face compatibility
+    # Save to centralized tts_output folder for watcher compatibility
     try:
         import scipy.io.wavfile
         import numpy as np
         from pathlib import Path
         
-        # Generate audio and save to file
+        # Generate audio and save to centralized folder
         audio = tts_model.generate_audio(model_state, text)
         audio_np = audio.cpu().numpy()
-        output_filepath = Path(__file__).parent.parent / "server_output.wav"
+        tts_output_folder = Path(__file__).parent.parent.parent / "tts_output"
+        tts_output_folder.mkdir(exist_ok=True)
+        output_filepath = tts_output_folder / "server_output.wav"
         scipy.io.wavfile.write(str(output_filepath), tts_model.sample_rate, audio_np)
-        logging.info(f"Saved audio to: {output_filepath}")
+        logging.info(f"Saved audio to centralized folder: {output_filepath}")
     except Exception as e:
         logging.error(f"Failed to save audio file: {e}")
 
