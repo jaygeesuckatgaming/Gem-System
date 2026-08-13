@@ -339,6 +339,7 @@ except Exception as e:
 
 geolocator = None
 tf = None
+
 try:
     tf = TimezoneFinder()
     print("MCP INFO: TimezoneFinder initialized successfully.")
@@ -346,10 +347,28 @@ except Exception as e:
     print(f"MCP WARNING: TimezoneFinder failed: {e}")
     tf = None
 
-# Geolocator disabled due to SSL issues - using fallback location.
-# Only show warning if timezonefinder actually failed
-if tf is None:
-    print("MCP WARNING: Time queries may fail. TimezoneFinder not available.")
+# Dynamic Geolocator Initialization (Resolving previous SSL issues)
+try:
+    # Try initializing with standard secure SSL
+    import ssl
+    try:
+        import certifi
+        ctx = ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        ctx = ssl.create_default_context()
+        
+    geolocator = Nominatim(user_agent="mcp_assistant", ssl_context=ctx)
+    print("MCP INFO: Geolocator (Nominatim) initialized successfully.")
+except Exception as e:
+    print(f"MCP WARNING: Standard Geolocator initialization failed: {e}")
+    # Fallback to an unverified SSL context if standard validation fails on your system
+    try:
+        ctx = ssl._create_unverified_context()
+        geolocator = Nominatim(user_agent="mcp_assistant", ssl_context=ctx)
+        print("MCP WARNING: Geolocator initialized with UNVERIFIED SSL context due to environment issues.")
+    except Exception as err:
+        print(f"MCP ERROR: Could not initialize Geolocator. Time lookups will fail. Details: {err}")
+        geolocator = None
 
 
 # ASYNC: Made async to use httpx
@@ -703,56 +722,30 @@ async def get_time_for_location(location_name: str) -> str:
     if not location_name:
         return "No location specified."
     
-    # Hardcoded coordinates for common cities (geocoding disabled due to SSL)
-    hardcoded_locations = {
-        "tokyo": (35.6762, 139.6503),
-        "pattaya": (12.9236, 100.8825),
-        "bangkok": (13.7563, 100.5018),
-        "london": (51.5074, -0.1278),
-        "new york": (40.7128, -74.0060),
-        "los angeles": (34.0522, -118.2437),
-        "paris": (48.8566, 2.3522),
-        "berlin": (52.5200, 13.4050),
-    }
-    
-    lat_lon = None
-    for city, coords in hardcoded_locations.items():
-        if city in location_name.lower():
-            lat_lon = coords
-            break
-    
-    if lat_lon:
-        lat, lon = lat_lon
-        try:
-            timezone_name = tf.timezone_at(lng=lon, lat=lat)
-            if timezone_name:
-                import datetime, pytz
-                target_tz = pytz.timezone(timezone_name)
-                target_time = datetime.datetime.now(target_tz)
-                formatted_time = target_time.strftime("%I:%M %p on %A")
-                return f"The time in {location_name.title()} is {formatted_time}."
-        except Exception as e:
-            pass
-    
-    # Fallback for unknown locations
     if geolocator is None or tf is None:
         print("MCP ERROR: Geolocator or timezone finder not initialized. Check startup logs.")
         return "My location system isn't working. Check the server logs."
+        
     try:
-        # Geopy in thread
+        # Run Geopy geocoding in a background thread to keep execution async
         location = await asyncio.to_thread(geolocator.geocode, location_name)
         if not location:
             return f"I couldn't find '{location_name}'."
+            
         timezone_name = await asyncio.to_thread(
             tf.timezone_at, lng=location.longitude, lat=location.latitude
         )
         if not timezone_name:
             return f"Could not find timezone for '{location_name}'."
+            
         target_tz = pytz.timezone(timezone_name)
         target_time = datetime.datetime.now(target_tz)
         formatted_time = target_time.strftime("%I:%M %p on %A")
+        
+        # Get city name safely from the geocoder's response
         city_name = location.address.split(',')[0]
         return f"The time in {city_name} is {formatted_time}."
+        
     except Exception as e:
         print(f"MCP ERROR: Time lookup failed: {e}")
         traceback.print_exc()
