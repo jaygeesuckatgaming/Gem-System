@@ -43,30 +43,11 @@ requests/
 background_songs/
 
 # StyleTTS2 voices (only ignore one specific file)
-StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short.wav
-
-# Database and logs
-*.db
-*.sqlite
-*.log
-gem_memory_db/
-
-# Temporary files
-*.tmp
-*.temp
-download_queue.txt
-autoplay.txt
-pause_play_signal.txt
-resume_signal.txt
-now_playing_state.txt
-
-# yt-dlp
-*.part
-*.ytdl
+tts/StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short.wav
 
 # StyleTTS2 checkpoints (large files)
-StyleTTS2/models/
-StyleTTS2/checkpoints/
+tts/StyleTTS2/models/
+tts/StyleTTS2/checkpoints/
 
 # Pocket TTS cache (large model files from Hugging Face)
 pocket-tts/.cache/

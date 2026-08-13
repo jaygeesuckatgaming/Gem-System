@@ -1318,7 +1318,7 @@ Popular Ollama Cloud Models:
         voice_frame.pack(fill="x", padx=10, pady=10)
         
         ttk.Label(voice_frame, text="Reference Voice File:").pack(anchor="w", pady=(0, 5))
-        self.voice_file_var = tk.StringVar(value="StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short_mono.wav")
+        self.voice_file_var = tk.StringVar(value="tts/StyleTTS2/voices/earn_lucky_pitch_minus_one_samplerate_24000_short_mono.wav")
         voice_entry = ttk.Entry(voice_frame, textvariable=self.voice_file_var, width=70)
         voice_entry.pack(fill="x", pady=(0, 10))
         
