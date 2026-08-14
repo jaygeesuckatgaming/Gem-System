@@ -115,8 +115,9 @@ def tts_endpoint():
 
         # Save the generated audio to a file for watcher_to_face.py to find
         script_dir = os.path.dirname(os.path.abspath(__file__))
-        # Save to centralized TTS output folder
-        tts_output_folder = os.path.join(os.path.dirname(script_dir), "tts_output")
+        # Save to centralized TTS output folder in root directory
+        # __file__ is in tts/StyleTTS2/watcher.py, so go up 2 levels
+        tts_output_folder = os.path.join(os.path.dirname(os.path.dirname(script_dir)), "tts_output")
         os.makedirs(tts_output_folder, exist_ok=True)
         output_filepath = os.path.join(tts_output_folder, "server_output.wav")
         
