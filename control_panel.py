@@ -47,13 +47,21 @@ class AudioApp(tk.Tk):
                     device_name = output_device.split('] ', 1)[1]
                     # Set SDL to use DirectSound on Windows
                     os.environ['SDL_AUDIODRIVER'] = 'directsound'
-                    # Note: SDL doesn't support device selection by name easily,
-                    # so we rely on Windows default device or user setting it manually
                     print(f"CONTROL PANEL: Audio output configured for: {device_name}")
+                    print(f"CONTROL PANEL: SDL will use Windows default device")
+                    print(f"CONTROL PANEL: If music isn't ducking, ensure this device is set as Windows Default")
         except Exception as e:
             print(f"CONTROL PANEL: Could not configure audio device: {e}")
         
         pygame.mixer.init()
+        
+        # Log actual device info
+        try:
+            import sounddevice as sd
+            default_output = sd.query_devices(kind='output')
+            print(f"CONTROL PANEL: pygame using output device: {default_output['name']} (ID: {default_output['index']})")
+        except Exception as e:
+            print(f"CONTROL PANEL: Could not verify output device: {e}")
 
         self.config = configparser.ConfigParser(interpolation=None)
         self.ini_entries = {}
