@@ -1643,6 +1643,8 @@ TTS Notes:
                     # Apply ducking immediately
                     current_volume = pygame.mixer.music.get_volume()
                     print(f"*** DUCKING: Music volume {current_volume:.2f} → {self._ducking_target_volume:.2f} (duck={duck_amount}dB) ***")
+                    print(f"DUCKING DEBUG: pygame.mixer.music.get_busy()={pygame.mixer.music.get_busy()}")
+                    print(f"DUCKING DEBUG: pygame.mixer.get_init()={pygame.mixer.get_init()}")
                     
                     # Smooth attack
                     steps = 10
@@ -1650,11 +1652,15 @@ TTS Notes:
                     delay_per_step = attack_ms / 1000.0 / steps
                     
                     for i in range(steps):
-                        pygame.mixer.music.set_volume(current_volume - (volume_step * (i + 1)))
+                        new_vol = current_volume - (volume_step * (i + 1))
+                        pygame.mixer.music.set_volume(new_vol)
+                        actual_vol = pygame.mixer.music.get_volume()
+                        print(f"DUCKING STEP {i+1}: set={new_vol:.2f}, actual={actual_vol:.2f}")
                         time.sleep(delay_per_step)
                     
+                    final_vol = pygame.mixer.music.get_volume()
+                    print(f"*** DUCKING COMPLETE: Final volume={final_vol:.2f}, target={self._ducking_target_volume:.2f} ***")
                     self.ducking_active = True
-                    print(f"*** CONTROL PANEL: TTS detected - ducking music to {self._ducking_target_volume:.2f} ***")
                 else:
                     # Already ducking - re-apply volume in case it was reset by music reload
                     if hasattr(self, '_ducking_target_volume'):
@@ -1662,7 +1668,8 @@ TTS Notes:
                         # Only re-apply if volume drifted from target
                         if abs(current_vol - self._ducking_target_volume) > 0.05:
                             pygame.mixer.music.set_volume(self._ducking_target_volume)
-                            print(f"DUCKING: Re-applied volume {self._ducking_target_volume:.2f} (was {current_vol:.2f})")
+                            actual_vol = pygame.mixer.music.get_volume()
+                            print(f"DUCKING: Re-applied target={self._ducking_target_volume:.2f}, was={current_vol:.2f}, actual={actual_vol:.2f}")
             else:
                 if self.ducking_active:
                     # Signal file removed - release ducking
@@ -1676,9 +1683,12 @@ TTS Notes:
                     delay_per_step = release_ms / 1000.0 / steps
                     
                     for i in range(steps):
-                        pygame.mixer.music.set_volume(current_volume + (volume_step * (i + 1)))
+                        new_vol = current_volume + (volume_step * (i + 1))
+                        pygame.mixer.music.set_volume(new_vol)
                         time.sleep(delay_per_step)
                     
+                    final_vol = pygame.mixer.music.get_volume()
+                    print(f"*** RESTORE COMPLETE: Final volume={final_vol:.2f} ***")
                     self.ducking_active = False
                     print("*** CONTROL PANEL: TTS complete - restoring music volume ***")
         except Exception as e:
