@@ -1583,7 +1583,15 @@ TTS Notes:
     def load_ducking_settings(self):
         """Load audio ducking settings from mcp_settings.ini"""
         try:
-            self.config.read("mcp_settings.ini")
+            ini_path = os.path.abspath("mcp_settings.ini")
+            print(f"DUCKING LOAD: Reading from {ini_path}")
+            print(f"DUCKING LOAD: File exists = {os.path.exists(ini_path)}")
+            
+            # Force a fresh read
+            self.config.read(ini_path)
+            
+            # Debug: show all sections
+            print(f"DUCKING LOAD: Available sections: {self.config.sections()}")
             
             if self.config.has_section('AudioDucking'):
                 ducking_enabled = self.config.getboolean('AudioDucking', 'enabled', fallback=False)
@@ -1591,12 +1599,20 @@ TTS Notes:
                 attack_ms = self.config.get('AudioDucking', 'attack_ms', fallback='100')
                 release_ms = self.config.get('AudioDucking', 'release_ms', fallback='500')
                 
+                print(f"DUCKING LOAD: enabled={ducking_enabled}, amount={duck_amount}, attack={attack_ms}, release={release_ms}")
+                
                 self.ducking_enabled_var.set(ducking_enabled)
                 self.ducking_amount_var.set(duck_amount)
                 self.ducking_attack_var.set(attack_ms)
                 self.ducking_release_var.set(release_ms)
+                
+                print(f"DUCKING LOAD: UI updated - checkbox state = {self.ducking_enabled_var.get()}")
+            else:
+                print(f"DUCKING LOAD: [AudioDucking] section NOT FOUND in ini file")
         except Exception as e:
             print(f"CONTROL PANEL: Error loading ducking settings: {e}")
+            import traceback
+            traceback.print_exc()
     
     def check_ducking_signal(self):
         """Check for ducking signal file from audio_player.py"""
