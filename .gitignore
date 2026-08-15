@@ -64,6 +64,9 @@ Neurosync/NeuroSync_Local_API/utils/model/
 # Bot memory database (personal data - DO NOT COMMIT)
 gem_memory_db/
 
+# Chat logs (personal conversation history - DO NOT COMMIT)
+mention_logs/
+
 # OS files
 .DS_Store
 Thumbs.db
