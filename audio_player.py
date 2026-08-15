@@ -189,7 +189,7 @@ if __name__ == "__main__":
                 
                 print("File is stable. Playing...")
                 
-                # Signal ducking start (if enabled)
+                # Signal ducking start via signal file (for control_panel.py to detect)
                 try:
                     import configparser
                     config = configparser.ConfigParser()
@@ -197,26 +197,17 @@ if __name__ == "__main__":
                         config.read('mcp_settings.ini')
                         ducking_enabled = config.getboolean('AudioDucking', 'enabled', fallback=False)
                         if ducking_enabled:
+                            # Write signal file for control panel to detect
                             duck_amount = config.get('AudioDucking', 'duck_amount', fallback='-15')
-                            attack_ms = int(config.get('AudioDucking', 'attack_ms', fallback='100'))
+                            attack_ms = config.get('AudioDucking', 'attack_ms', fallback='100')
+                            release_ms = config.get('AudioDucking', 'release_ms', fallback='500')
                             
-                            # Calculate target volume
-                            target_volume = max(0.0, 1.0 + (float(duck_amount) / 100.0))
-                            
-                            # Apply ducking with attack time
-                            import pygame
-                            current_volume = 1.0
-                            steps = 10
-                            volume_step = (current_volume - target_volume) / steps
-                            delay_per_step = attack_ms / 1000.0 / steps
-                            
-                            for i in range(steps):
-                                pygame.mixer.music.set_volume(current_volume - (volume_step * (i + 1)))
-                                time.sleep(delay_per_step)
-                            
-                            print(f"Audio ducking applied: volume reduced to {target_volume:.2f}")
+                            signal_file = os.path.join(script_dir, 'ducking_signal.txt')
+                            with open(signal_file, 'w') as f:
+                                f.write(f"{duck_amount}\n{attack_ms}\n{release_ms}\n")
+                            print(f"Audio ducking signal sent (amount={duck_amount}dB)")
                 except Exception as e:
-                    print(f"Warning: Could not apply ducking: {e}")
+                    print(f"Warning: Could not send ducking signal: {e}")
                 
                 try:
                     pygame.mixer.music.load(target_file_path)
@@ -232,30 +223,14 @@ if __name__ == "__main__":
                     print(f"Error during playback: {e}")
                 
                 finally:
-                    # Release ducking (restore volume)
+                    # Remove ducking signal file (signals release)
                     try:
-                        import configparser
-                        config = configparser.ConfigParser()
-                        if os.path.exists('mcp_settings.ini'):
-                            config.read('mcp_settings.ini')
-                            ducking_enabled = config.getboolean('AudioDucking', 'enabled', fallback=False)
-                            if ducking_enabled:
-                                release_ms = int(config.get('AudioDucking', 'release_ms', fallback='500'))
-                                
-                                # Restore volume with release time
-                                current_volume = pygame.mixer.music.get_volume()
-                                target_volume = 1.0
-                                steps = 10
-                                volume_step = (target_volume - current_volume) / steps
-                                delay_per_step = release_ms / 1000.0 / steps
-                                
-                                for i in range(steps):
-                                    pygame.mixer.music.set_volume(current_volume + (volume_step * (i + 1)))
-                                    time.sleep(delay_per_step)
-                                
-                                print("Audio ducking released: volume restored")
+                        signal_file = os.path.join(script_dir, 'ducking_signal.txt')
+                        if os.path.exists(signal_file):
+                            os.remove(signal_file)
+                            print("Audio ducking signal cleared")
                     except Exception as e:
-                        print(f"Warning: Could not release ducking: {e}")
+                        print(f"Warning: Could not clear ducking signal: {e}")
                     
                     # Unload audio to release file lock
                     try:

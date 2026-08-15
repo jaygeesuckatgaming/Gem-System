@@ -101,6 +101,8 @@ class AudioApp(tk.Tk):
         self.ducking_amount_var = tk.StringVar(value="-15")
         self.ducking_attack_var = tk.StringVar(value="100")
         self.ducking_release_var = tk.StringVar(value="500")
+        self.ducking_active = False
+        self.last_ducking_check = 0
 
         self.create_widgets()
         self.populate_device_lists()
@@ -112,6 +114,7 @@ class AudioApp(tk.Tk):
         self.process_video_queue()
         self.update_song_progress()
         self.check_for_autoplay()
+        self.check_ducking_signal()
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
@@ -1568,8 +1571,61 @@ TTS Notes:
         except Exception as e:
             print(f"CONTROL PANEL: Error loading ducking settings: {e}")
     
+    def check_ducking_signal(self):
+        """Check for ducking signal file from audio_player.py"""
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            signal_file = os.path.join(script_dir, 'ducking_signal.txt')
+            
+            if os.path.exists(signal_file):
+                if not self.ducking_active:
+                    # Ducking signal detected - apply ducking
+                    with open(signal_file, 'r') as f:
+                        lines = f.readlines()
+                        duck_amount = float(lines[0].strip()) if len(lines) > 0 else -15
+                        attack_ms = int(lines[1].strip()) if len(lines) > 1 else 100
+                    
+                    target_volume = max(0.0, 1.0 + (duck_amount / 100.0))
+                    
+                    # Smooth attack
+                    current_volume = pygame.mixer.music.get_volume()
+                    steps = 10
+                    volume_step = (current_volume - target_volume) / steps
+                    delay_per_step = attack_ms / 1000.0 / steps
+                    
+                    for i in range(steps):
+                        pygame.mixer.music.set_volume(current_volume - (volume_step * (i + 1)))
+                        time.sleep(delay_per_step)
+                    
+                    self.ducking_active = True
+                    print(f"CONTROL PANEL: TTS detected - ducking music to {target_volume:.2f}")
+            else:
+                if self.ducking_active:
+                    # Signal file removed - release ducking
+                    release_ms = int(self.ducking_release_var.get())
+                    current_volume = pygame.mixer.music.get_volume()
+                    
+                    # Smooth release
+                    steps = 10
+                    volume_step = (1.0 - current_volume) / steps
+                    delay_per_step = release_ms / 1000.0 / steps
+                    
+                    for i in range(steps):
+                        pygame.mixer.music.set_volume(current_volume + (volume_step * (i + 1)))
+                        time.sleep(delay_per_step)
+                    
+                    self.ducking_active = False
+                    print("CONTROL PANEL: TTS complete - restoring music volume")
+        except Exception as e:
+            # Silently ignore errors to avoid spam
+            pass
+        
+        # Schedule next check
+        if self.ducking_enabled_var.get():
+            self.after(100, self.check_ducking_signal)
+    
     def apply_audio_ducking(self, is_ducking):
-        """Apply audio ducking to background music"""
+        """Apply audio ducking to background music (legacy method)"""
         if not self.ducking_enabled_var.get():
             return
         
