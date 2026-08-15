@@ -61,6 +61,9 @@ DMOSpeech2/
 Neurosync/NeuroSync_Player/generated/
 Neurosync/NeuroSync_Local_API/utils/model/
 
+# Bot memory database (personal data - DO NOT COMMIT)
+gem_memory_db/
+
 # OS files
 .DS_Store
 Thumbs.db
