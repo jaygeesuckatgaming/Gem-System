@@ -37,6 +37,7 @@ class AudioApp(tk.Tk):
         self.geometry("1400x950")
 
         # Configure pygame/SDL to use the selected output device
+        configured_device_name = None
         try:
             config = configparser.ConfigParser()
             config.read(INI_FILE_PATH)
@@ -44,22 +45,29 @@ class AudioApp(tk.Tk):
             if output_device and output_device != 'None':
                 # Extract device name from "[ID] Name" format
                 if ']' in output_device:
-                    device_name = output_device.split('] ', 1)[1]
+                    configured_device_name = output_device.split('] ', 1)[1]
                     # Set SDL to use DirectSound on Windows
                     os.environ['SDL_AUDIODRIVER'] = 'directsound'
-                    print(f"CONTROL PANEL: Audio output configured for: {device_name}")
-                    print(f"CONTROL PANEL: SDL will use Windows default device")
-                    print(f"CONTROL PANEL: If music isn't ducking, ensure this device is set as Windows Default")
+                    print(f"CONTROL PANEL: Configured for: {configured_device_name}")
         except Exception as e:
             print(f"CONTROL PANEL: Could not configure audio device: {e}")
         
         pygame.mixer.init()
         
-        # Log actual device info
+        # Verify which device pygame is actually using
         try:
             import sounddevice as sd
             default_output = sd.query_devices(kind='output')
-            print(f"CONTROL PANEL: pygame using output device: {default_output['name']} (ID: {default_output['index']})")
+            actual_device_name = default_output['name']
+            actual_device_id = default_output['index']
+            print(f"CONTROL PANEL: pygame using: {actual_device_name} (ID: {actual_device_id})")
+            
+            # Warn if mismatch
+            if configured_device_name and configured_device_name != actual_device_name:
+                print(f"⚠️  WARNING: Device mismatch!")
+                print(f"   Configured: {configured_device_name}")
+                print(f"   Actual:     {actual_device_name}")
+                print(f"   Ducking may not work! Change Audio Output to match '{actual_device_name}'")
         except Exception as e:
             print(f"CONTROL PANEL: Could not verify output device: {e}")
 
