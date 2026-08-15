@@ -1514,14 +1514,6 @@ TTS Notes:
             self.config.set('PocketTTS', 'enabled', str(self.pockettts_enabled_var.get()))
             self.config.set('PocketTTS', 'tts_url', self.pockettts_url_var.get())
             
-            # Save ducking settings
-            if not self.config.has_section('AudioDucking'):
-                self.config.add_section('AudioDucking')
-            self.config.set('AudioDucking', 'enabled', str(self.ducking_enabled_var.get()))
-            self.config.set('AudioDucking', 'duck_amount', self.ducking_amount_var.get())
-            self.config.set('AudioDucking', 'attack_ms', self.ducking_attack_var.get())
-            self.config.set('AudioDucking', 'release_ms', self.ducking_release_var.get())
-            
             # Save to file
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
