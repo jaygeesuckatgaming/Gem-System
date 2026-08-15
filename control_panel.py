@@ -1548,7 +1548,11 @@ TTS Notes:
     def save_ducking_settings(self):
         """Save audio ducking settings to mcp_settings.ini"""
         try:
-            self.config.read("mcp_settings.ini")
+            # Use absolute path
+            ini_path = os.path.abspath("mcp_settings.ini")
+            print(f"DUCKING SAVE: Writing to {ini_path}")
+            
+            self.config.read(ini_path)
             
             if not self.config.has_section('AudioDucking'):
                 self.config.add_section('AudioDucking')
@@ -1558,15 +1562,18 @@ TTS Notes:
             self.config.set('AudioDucking', 'attack_ms', self.ducking_attack_var.get())
             self.config.set('AudioDucking', 'release_ms', self.ducking_release_var.get())
             
-            with open("mcp_settings.ini", "w") as f:
+            with open(ini_path, "w") as f:
                 self.config.write(f)
             
             print(f"*** DUCKING SAVED: enabled={self.ducking_enabled_var.get()}, amount={self.ducking_amount_var.get()}dB, attack={self.ducking_attack_var.get()}ms, release={self.ducking_release_var.get()}ms ***")
             
-            # Verify it was written correctly
-            self.config.read("mcp_settings.ini")
-            saved_enabled = self.config.get('AudioDucking', 'enabled', fallback='NOT_FOUND')
-            print(f"DUCKING VERIFY: Read back from ini - enabled={saved_enabled}")
+            # Verify it was written correctly by reading fresh
+            verify_config = configparser.ConfigParser()
+            verify_config.read(ini_path)
+            saved_enabled = verify_config.get('AudioDucking', 'enabled', fallback='NOT_FOUND')
+            saved_amount = verify_config.get('AudioDucking', 'duck_amount', fallback='NOT_FOUND')
+            print(f"DUCKING VERIFY: Read back from ini - enabled={saved_enabled}, duck_amount={saved_amount}")
+            print(f"DUCKING VERIFY: File exists at {ini_path} = {os.path.exists(ini_path)}")
             
         except Exception as e:
             print(f"CONTROL PANEL: Error saving ducking settings: {e}")
