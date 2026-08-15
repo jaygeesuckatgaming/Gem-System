@@ -1632,7 +1632,8 @@ TTS Notes:
                     # Store release_ms for later
                     self._ducking_release_ms = release_ms
                     
-                    target_volume = max(0.0, 1.0 + (duck_amount / 100.0))
+                    # Calculate target volume (duck_amount is negative, e.g., -15 means reduce to 15% of original)
+                    target_volume = max(0.0, 1.0 - abs(duck_amount) / 100.0)
                     
                     # Check if music is actually playing
                     if not pygame.mixer.music.get_busy():
@@ -1641,7 +1642,8 @@ TTS Notes:
                         return
                     
                     current_volume = pygame.mixer.music.get_volume()
-                    print(f"DUCKING DEBUG: Ducking from {current_volume:.2f} to {target_volume:.2f} over {attack_ms}ms")
+                    print(f"*** DUCKING: Music volume {current_volume:.2f} → {target_volume:.2f} (duck={duck_amount}dB) over {attack_ms}ms ***")
+                    print(f"DUCKING DEBUG: Music busy={pygame.mixer.music.get_busy()}")
                     
                     # Smooth attack
                     steps = 10
