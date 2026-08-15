@@ -196,18 +196,22 @@ if __name__ == "__main__":
                     if os.path.exists('mcp_settings.ini'):
                         config.read('mcp_settings.ini')
                         ducking_enabled = config.getboolean('AudioDucking', 'enabled', fallback=False)
+                        print(f"DUCKING DEBUG: enabled={ducking_enabled}, script_dir={script_dir}")
                         if ducking_enabled:
                             # Write signal file for control panel to detect
                             duck_amount = config.get('AudioDucking', 'duck_amount', fallback='-15')
                             attack_ms = config.get('AudioDucking', 'attack_ms', fallback='100')
                             release_ms = config.get('AudioDucking', 'release_ms', fallback='500')
                             
-                            signal_file = os.path.join(script_dir, 'ducking_signal.txt')
+                            signal_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ducking_signal.txt')
                             with open(signal_file, 'w') as f:
                                 f.write(f"{duck_amount}\n{attack_ms}\n{release_ms}\n")
-                            print(f"Audio ducking signal sent (amount={duck_amount}dB)")
+                            print(f"*** DUCKING SIGNAL CREATED at {signal_file} ***")
+                            print(f"Audio ducking signal sent (amount={duck_amount}dB, attack={attack_ms}ms, release={release_ms}ms)")
                 except Exception as e:
                     print(f"Warning: Could not send ducking signal: {e}")
+                    import traceback
+                    traceback.print_exc()
                 
                 try:
                     pygame.mixer.music.load(target_file_path)
@@ -225,12 +229,14 @@ if __name__ == "__main__":
                 finally:
                     # Remove ducking signal file (signals release)
                     try:
-                        signal_file = os.path.join(script_dir, 'ducking_signal.txt')
+                        signal_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ducking_signal.txt')
                         if os.path.exists(signal_file):
                             os.remove(signal_file)
-                            print("Audio ducking signal cleared")
+                            print(f"*** DUCKING SIGNAL REMOVED from {signal_file} ***")
                     except Exception as e:
                         print(f"Warning: Could not clear ducking signal: {e}")
+                        import traceback
+                        traceback.print_exc()
                     
                     # Unload audio to release file lock
                     try:

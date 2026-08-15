@@ -1577,18 +1577,38 @@ TTS Notes:
             script_dir = os.path.dirname(os.path.abspath(__file__))
             signal_file = os.path.join(script_dir, 'ducking_signal.txt')
             
+            # Debug: print path every 10 checks
+            if not hasattr(self, '_ducking_check_count'):
+                self._ducking_check_count = 0
+            self._ducking_check_count += 1
+            if self._ducking_check_count % 10 == 0:
+                print(f"DUCKING DEBUG: Checking {signal_file}, exists={os.path.exists(signal_file)}, enabled={self.ducking_enabled_var.get()}")
+            
             if os.path.exists(signal_file):
                 if not self.ducking_active:
                     # Ducking signal detected - apply ducking
+                    print(f"*** DUCKING SIGNAL DETECTED at {signal_file} ***")
                     with open(signal_file, 'r') as f:
                         lines = f.readlines()
                         duck_amount = float(lines[0].strip()) if len(lines) > 0 else -15
                         attack_ms = int(lines[1].strip()) if len(lines) > 1 else 100
+                        release_ms = int(lines[2].strip()) if len(lines) > 2 else 500
+                    
+                    # Store release_ms for later
+                    self._ducking_release_ms = release_ms
                     
                     target_volume = max(0.0, 1.0 + (duck_amount / 100.0))
                     
-                    # Smooth attack
+                    # Check if music is actually playing
+                    if not pygame.mixer.music.get_busy():
+                        print("DUCKING DEBUG: Signal detected but no music playing")
+                        self.ducking_active = True
+                        return
+                    
                     current_volume = pygame.mixer.music.get_volume()
+                    print(f"DUCKING DEBUG: Ducking from {current_volume:.2f} to {target_volume:.2f} over {attack_ms}ms")
+                    
+                    # Smooth attack
                     steps = 10
                     volume_step = (current_volume - target_volume) / steps
                     delay_per_step = attack_ms / 1000.0 / steps
@@ -1598,11 +1618,12 @@ TTS Notes:
                         time.sleep(delay_per_step)
                     
                     self.ducking_active = True
-                    print(f"CONTROL PANEL: TTS detected - ducking music to {target_volume:.2f}")
+                    print(f"*** CONTROL PANEL: TTS detected - ducking music to {target_volume:.2f} ***")
             else:
                 if self.ducking_active:
                     # Signal file removed - release ducking
-                    release_ms = int(self.ducking_release_var.get())
+                    print(f"*** DUCKING SIGNAL GONE - restoring volume ***")
+                    release_ms = getattr(self, '_ducking_release_ms', 500)
                     current_volume = pygame.mixer.music.get_volume()
                     
                     # Smooth release
@@ -1615,10 +1636,11 @@ TTS Notes:
                         time.sleep(delay_per_step)
                     
                     self.ducking_active = False
-                    print("CONTROL PANEL: TTS complete - restoring music volume")
+                    print("*** CONTROL PANEL: TTS complete - restoring music volume ***")
         except Exception as e:
-            # Silently ignore errors to avoid spam
-            pass
+            print(f"DUCKING ERROR: {e}")
+            import traceback
+            traceback.print_exc()
         
         # Schedule next check
         if self.ducking_enabled_var.get():
