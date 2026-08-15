@@ -1630,8 +1630,9 @@ TTS Notes:
                         release_ms = int(lines[2].strip()) if len(lines) > 2 else 500
                     
                     # Store settings for persistent ducking
+                    # Convert dB to volume: -15dB = 18% volume, -30dB = 3% volume
                     self._ducking_release_ms = release_ms
-                    self._ducking_target_volume = max(0.0, 1.0 - abs(duck_amount) / 100.0)
+                    self._ducking_target_volume = max(0.0, 10.0 ** (duck_amount / 20.0))  # Proper dB conversion
                     self._ducking_attack_ms = attack_ms
                     
                     # Check if music is actually playing
