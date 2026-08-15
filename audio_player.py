@@ -116,27 +116,52 @@ if __name__ == "__main__":
     except:
         pass
     
-    print(f"Initializing pygame mixer...")
-    if full_device_name:
-        print(f"Using device: '{full_device_name}'")
-        try:
-            pygame.mixer.pre_init(44100, -16, 2, 512, devicename=full_device_name)
-            pygame.init()
-            print("Audio mixer initialized with specified device.")
-        except Exception as e:
-            print(f"Failed with specified device: {e}")
-            print("Trying default device...")
-            pygame.mixer.quit()
-            pygame.mixer.init()
-            print("Audio mixer initialized with default device.")
-    else:
+    print("\n" + "="*60)
+    print(f"🔍  Searching for audio device match for: '{selected_device_name}'")
+
+    try:
+        pygame.init()
+        from pygame._sdl2 import get_audio_device_names
+        
+        available_devices = get_audio_device_names(False)
+        
+        final_device_name = None
+        
+        if selected_device_name:
+            for device in available_devices:
+                if selected_device_name == device or selected_device_name in device:
+                    final_device_name = device
+                    print(f"✅  MATCH FOUND: Using hardware device: '{final_device_name}'")
+                    break
+        
+        pygame.quit()
+        
+        if final_device_name:
+            pygame.mixer.pre_init(44100, -16, 2, 512, devicename=final_device_name)
+        else:
+            print("⚠️  NO MATCH / FALLBACK: Using System Default Audio Device.")
+            pygame.mixer.pre_init(44100, -16, 2, 512, devicename=None)
+
+        pygame.init()
         pygame.mixer.init()
-        print("Audio mixer initialized with default device (no specific device found).")
-    
-    # Verify mixer is working
-    if not pygame.mixer.get_init():
-        print("FATAL: Mixer initialization check failed")
-        sys.exit(1)
+        
+        if pygame.mixer.get_init():
+            print("🔊  Audio Engine is Ready.")
+        else:
+            print("❌  Audio Engine failed to start.")
+            sys.exit(1)
+
+    except Exception as e:
+        print(f"❌ CRITICAL AUDIO ERROR: {e}")
+        print("   -> Defaulting to standard system audio to prevent crash.")
+        try:
+            pygame.quit()
+            pygame.init()
+            pygame.mixer.init()
+        except:
+            pass
+
+    print("="*60 + "\n")
         
     print("Audio mixer ready.")
     
