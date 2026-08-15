@@ -77,6 +77,7 @@ Gem-System is a comprehensive AI assistant platform featuring:
 - **Real-time Meters**: Input/output audio level visualization
 - **Settings Editor**: Full INI file editor with syntax highlighting
 - **Music Player**: Queue management, play/pause/seek, background music
+- **Audio Ducking**: Automatic music volume reduction during TTS playback
 - **Camera Preview**: Live camera feed display
 - **Service Launchers**: Buttons to start MCP, TTS, Neurosync services
 - **Audio Testing**: Test tone generation for output device verification
@@ -92,6 +93,7 @@ Gem-System is a comprehensive AI assistant platform featuring:
 - **File Watching**: Monitors `tts_output/server_output.wav`
 - **Auto-play**: Plays when file detected, deletes after playback
 - **Smart Device Matching**: pygame._sdl2 device name matching
+- **Audio Ducking**: Automatically reduces background music volume during TTS
 - **Retry Logic**: Handles file locks with 5-retry delete
 - **Fallback**: Auto-fallback to default device on failure
 
@@ -242,6 +244,7 @@ All settings in one file:
 | **[SocialStream]** | Session ID, platforms, API URL |
 | **[Watcher]** | Target file path for audio watcher |
 | **[Music]** | Download folder, queue settings, max duration |
+| **[AudioDucking]** | Enable ducking, duck amount (dB), attack/release times |
 
 ---
 
@@ -284,6 +287,17 @@ Used in `audio_player.py` and `watcher_to_face.py`:
 - StatefulModule base class maintains KV cache
 - EOS detection → Continue for N frames after end-of-speech
 - LRU cache for voice prompts (avoid re-encoding)
+```
+
+### Audio Ducking System
+
+```python
+- TTS playback triggers automatic music volume reduction
+- Configurable duck amount (-60 to 0 dB)
+- Attack time: How quickly music ducks (10-1000ms)
+- Release time: How quickly music restores (100-5000ms)
+- Smooth volume transitions using stepped interpolation
+- Enabled/disabled via Control Panel TTS tab
 ```
 
 ---

@@ -189,6 +189,35 @@ if __name__ == "__main__":
                 
                 print("File is stable. Playing...")
                 
+                # Signal ducking start (if enabled)
+                try:
+                    import configparser
+                    config = configparser.ConfigParser()
+                    if os.path.exists('mcp_settings.ini'):
+                        config.read('mcp_settings.ini')
+                        ducking_enabled = config.getboolean('AudioDucking', 'enabled', fallback=False)
+                        if ducking_enabled:
+                            duck_amount = config.get('AudioDucking', 'duck_amount', fallback='-15')
+                            attack_ms = int(config.get('AudioDucking', 'attack_ms', fallback='100'))
+                            
+                            # Calculate target volume
+                            target_volume = max(0.0, 1.0 + (float(duck_amount) / 100.0))
+                            
+                            # Apply ducking with attack time
+                            import pygame
+                            current_volume = 1.0
+                            steps = 10
+                            volume_step = (current_volume - target_volume) / steps
+                            delay_per_step = attack_ms / 1000.0 / steps
+                            
+                            for i in range(steps):
+                                pygame.mixer.music.set_volume(current_volume - (volume_step * (i + 1)))
+                                time.sleep(delay_per_step)
+                            
+                            print(f"Audio ducking applied: volume reduced to {target_volume:.2f}")
+                except Exception as e:
+                    print(f"Warning: Could not apply ducking: {e}")
+                
                 try:
                     pygame.mixer.music.load(target_file_path)
                     pygame.mixer.music.play()
@@ -203,6 +232,31 @@ if __name__ == "__main__":
                     print(f"Error during playback: {e}")
                 
                 finally:
+                    # Release ducking (restore volume)
+                    try:
+                        import configparser
+                        config = configparser.ConfigParser()
+                        if os.path.exists('mcp_settings.ini'):
+                            config.read('mcp_settings.ini')
+                            ducking_enabled = config.getboolean('AudioDucking', 'enabled', fallback=False)
+                            if ducking_enabled:
+                                release_ms = int(config.get('AudioDucking', 'release_ms', fallback='500'))
+                                
+                                # Restore volume with release time
+                                current_volume = pygame.mixer.music.get_volume()
+                                target_volume = 1.0
+                                steps = 10
+                                volume_step = (target_volume - current_volume) / steps
+                                delay_per_step = release_ms / 1000.0 / steps
+                                
+                                for i in range(steps):
+                                    pygame.mixer.music.set_volume(current_volume + (volume_step * (i + 1)))
+                                    time.sleep(delay_per_step)
+                                
+                                print("Audio ducking released: volume restored")
+                    except Exception as e:
+                        print(f"Warning: Could not release ducking: {e}")
+                    
                     # Unload audio to release file lock
                     try:
                         if pygame.mixer.get_init():

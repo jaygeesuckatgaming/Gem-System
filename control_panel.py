@@ -95,11 +95,18 @@ class AudioApp(tk.Tk):
         self.music_downloader_enabled_var = tk.BooleanVar(value=True)
         self.send_to_social_stream_var = tk.BooleanVar(value=True)
         self.streaming_platform_var = tk.StringVar(value="youtube")
+        
+        # Audio ducking settings
+        self.ducking_enabled_var = tk.BooleanVar(value=False)
+        self.ducking_amount_var = tk.StringVar(value="-15")
+        self.ducking_attack_var = tk.StringVar(value="100")
+        self.ducking_release_var = tk.StringVar(value="500")
 
         self.create_widgets()
         self.populate_device_lists()
         self.populate_camera_list()
         self.load_tts_settings()
+        self.load_ducking_settings()
         self.reload_ini_ui()
         self.process_audio_queues()
         self.process_video_queue()
@@ -1323,7 +1330,39 @@ Popular Ollama Cloud Models:
         voice_entry.pack(fill="x", pady=(0, 10))
         
         ttk.Label(voice_frame, text="Pocket TTS uses voice cloning with truncate=True for better quality.", 
-                 foreground="gray").pack(anchor="w")
+                  foreground="gray").pack(anchor="w")
+        
+        # Audio ducking frame
+        ducking_frame = ttk.LabelFrame(parent_frame, text="Audio Ducking (TTS Priority)", padding=10)
+        ducking_frame.pack(fill="x", padx=10, pady=10)
+        
+        self.ducking_enabled_var = tk.BooleanVar(value=False)
+        ducking_check = ttk.Checkbutton(
+            ducking_frame,
+            text="Enable Audio Ducking",
+            variable=self.ducking_enabled_var,
+            command=self.save_ducking_settings
+        )
+        ducking_check.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
+        
+        ttk.Label(ducking_frame, text="Duck Amount (dB):").grid(row=1, column=0, sticky="w", padx=5, pady=5)
+        self.ducking_amount_var = tk.StringVar(value="-15")
+        ducking_amount_spin = ttk.Spinbox(ducking_frame, from_=-60, to=0, width=10, textvariable=self.ducking_amount_var, command=self.save_ducking_settings)
+        ducking_amount_spin.grid(row=1, column=1, sticky="w", padx=5, pady=5)
+        
+        ttk.Label(ducking_frame, text="Attack (ms):").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        self.ducking_attack_var = tk.StringVar(value="100")
+        ducking_attack_spin = ttk.Spinbox(ducking_frame, from_=10, to=1000, width=10, textvariable=self.ducking_attack_var, command=self.save_ducking_settings)
+        ducking_attack_spin.grid(row=2, column=1, sticky="w", padx=5, pady=5)
+        
+        ttk.Label(ducking_frame, text="Release (ms):").grid(row=3, column=0, sticky="w", padx=5, pady=5)
+        self.ducking_release_var = tk.StringVar(value="500")
+        ducking_release_spin = ttk.Spinbox(ducking_frame, from_=100, to=5000, width=10, textvariable=self.ducking_release_var, command=self.save_ducking_settings)
+        ducking_release_spin.grid(row=3, column=1, sticky="w", padx=5, pady=5)
+        
+        ttk.Label(ducking_frame, 
+                  text="When TTS plays, music volume is reduced by the duck amount", 
+                  foreground="gray", font=('TkDefaultFont', 8)).grid(row=4, column=0, columnspan=2, sticky="w", pady=(10, 0))
         
         # Save button
         save_frame = ttk.Frame(parent_frame, padding=10)
@@ -1472,6 +1511,14 @@ TTS Notes:
             self.config.set('PocketTTS', 'enabled', str(self.pockettts_enabled_var.get()))
             self.config.set('PocketTTS', 'tts_url', self.pockettts_url_var.get())
             
+            # Save ducking settings
+            if not self.config.has_section('AudioDucking'):
+                self.config.add_section('AudioDucking')
+            self.config.set('AudioDucking', 'enabled', str(self.ducking_enabled_var.get()))
+            self.config.set('AudioDucking', 'duck_amount', self.ducking_amount_var.get())
+            self.config.set('AudioDucking', 'attack_ms', self.ducking_attack_var.get())
+            self.config.set('AudioDucking', 'release_ms', self.ducking_release_var.get())
+            
             # Save to file
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
@@ -1482,6 +1529,64 @@ TTS Notes:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save TTS settings:\n{e}")
             self.tts_status_label.config(text="Status: Save failed!", foreground="red")
+    
+    def save_ducking_settings(self):
+        """Save audio ducking settings to mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            
+            if not self.config.has_section('AudioDucking'):
+                self.config.add_section('AudioDucking')
+            
+            self.config.set('AudioDucking', 'enabled', str(self.ducking_enabled_var.get()))
+            self.config.set('AudioDucking', 'duck_amount', self.ducking_amount_var.get())
+            self.config.set('AudioDucking', 'attack_ms', self.ducking_attack_var.get())
+            self.config.set('AudioDucking', 'release_ms', self.ducking_release_var.get())
+            
+            with open("mcp_settings.ini", "w") as f:
+                self.config.write(f)
+            
+            print(f"CONTROL PANEL: Ducking settings saved (enabled={self.ducking_enabled_var.get()}, amount={self.ducking_amount_var.get()}dB)")
+        except Exception as e:
+            print(f"CONTROL PANEL: Error saving ducking settings: {e}")
+    
+    def load_ducking_settings(self):
+        """Load audio ducking settings from mcp_settings.ini"""
+        try:
+            self.config.read("mcp_settings.ini")
+            
+            if self.config.has_section('AudioDucking'):
+                ducking_enabled = self.config.getboolean('AudioDucking', 'enabled', fallback=False)
+                duck_amount = self.config.get('AudioDucking', 'duck_amount', fallback='-15')
+                attack_ms = self.config.get('AudioDucking', 'attack_ms', fallback='100')
+                release_ms = self.config.get('AudioDucking', 'release_ms', fallback='500')
+                
+                self.ducking_enabled_var.set(ducking_enabled)
+                self.ducking_amount_var.set(duck_amount)
+                self.ducking_attack_var.set(attack_ms)
+                self.ducking_release_var.set(release_ms)
+        except Exception as e:
+            print(f"CONTROL PANEL: Error loading ducking settings: {e}")
+    
+    def apply_audio_ducking(self, is_ducking):
+        """Apply audio ducking to background music"""
+        if not self.ducking_enabled_var.get():
+            return
+        
+        try:
+            duck_amount = int(self.ducking_amount_var.get())
+            if is_ducking:
+                # Apply ducking - reduce volume
+                current_volume = pygame.mixer.music.get_volume()
+                target_volume = max(0.0, 1.0 + (duck_amount / 100.0))
+                pygame.mixer.music.set_volume(target_volume)
+                print(f"CONTROL PANEL: Audio ducking applied - volume reduced to {target_volume:.2f}")
+            else:
+                # Release ducking - restore volume
+                pygame.mixer.music.set_volume(1.0)
+                print("CONTROL PANEL: Audio ducking released - volume restored")
+        except Exception as e:
+            print(f"CONTROL PANEL: Error applying ducking: {e}")
     
     def setup_ini_widgets(self, parent_frame):
         ini_frame = ttk.LabelFrame(parent_frame, text="mcp_settings.ini (General)")
