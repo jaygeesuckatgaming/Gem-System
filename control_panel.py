@@ -1344,7 +1344,7 @@ Popular Ollama Cloud Models:
             ducking_frame,
             text="Enable Audio Ducking",
             variable=self.ducking_enabled_var,
-            command=self.save_ducking_settings
+            command=self.on_ducking_toggle
         )
         ducking_check.grid(row=0, column=0, columnspan=2, sticky="w", pady=(0, 10))
         
@@ -1533,6 +1533,18 @@ TTS Notes:
             messagebox.showerror("Error", f"Failed to save TTS settings:\n{e}")
             self.tts_status_label.config(text="Status: Save failed!", foreground="red")
     
+    def on_ducking_toggle(self):
+        """Called when ducking checkbox is toggled"""
+        print(f"DUCKING TOGGLE: enabled={self.ducking_enabled_var.get()}")
+        self.save_ducking_settings()
+        
+        # Start/stop monitoring based on toggle
+        if self.ducking_enabled_var.get():
+            self.check_ducking_signal()
+            print("DUCKING MONITOR: Started")
+        else:
+            print("DUCKING MONITOR: Stopped (will restart on next TTS)")
+    
     def save_ducking_settings(self):
         """Save audio ducking settings to mcp_settings.ini"""
         try:
@@ -1549,9 +1561,17 @@ TTS Notes:
             with open("mcp_settings.ini", "w") as f:
                 self.config.write(f)
             
-            print(f"CONTROL PANEL: Ducking settings saved (enabled={self.ducking_enabled_var.get()}, amount={self.ducking_amount_var.get()}dB)")
+            print(f"*** DUCKING SAVED: enabled={self.ducking_enabled_var.get()}, amount={self.ducking_amount_var.get()}dB, attack={self.ducking_attack_var.get()}ms, release={self.ducking_release_var.get()}ms ***")
+            
+            # Verify it was written correctly
+            self.config.read("mcp_settings.ini")
+            saved_enabled = self.config.get('AudioDucking', 'enabled', fallback='NOT_FOUND')
+            print(f"DUCKING VERIFY: Read back from ini - enabled={saved_enabled}")
+            
         except Exception as e:
             print(f"CONTROL PANEL: Error saving ducking settings: {e}")
+            import traceback
+            traceback.print_exc()
     
     def load_ducking_settings(self):
         """Load audio ducking settings from mcp_settings.ini"""
