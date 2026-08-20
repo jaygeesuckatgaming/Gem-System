@@ -1633,12 +1633,10 @@ TTS Notes:
                 self._ducking_check_count = 0
             self._ducking_check_count += 1
             if self._ducking_check_count % 10 == 0:
-                print(f"DUCKING DEBUG: Checking {signal_file}, exists={os.path.exists(signal_file)}, enabled={self.ducking_enabled_var.get()}")
-            
-            if os.path.exists(signal_file):
-                if not self.ducking_active:
-                    # First time detection - initialize
-                    print(f"*** DUCKING SIGNAL DETECTED at {signal_file} ***")
+                if os.path.exists(signal_file):
+                    if not self.ducking_active:
+                        # First time detection - initialize
+                        print(f"*** DUCKING SIGNAL DETECTED at {signal_file} ***")
                     with open(signal_file, 'r') as f:
                         lines = f.readlines()
                         duck_amount = float(lines[0].strip()) if len(lines) > 0 else -15

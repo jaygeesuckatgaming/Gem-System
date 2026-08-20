@@ -41,6 +41,12 @@ from twitch_music_checker import TwitchMusicChecker
 # Import OpenCode integration
 from opencode_integration import OpenCodeIntegration
 
+# Import Song Wakeword Handler
+from song_wakeword import SongWakewordHandler
+
+# Initialize song handler
+song_handler = SongWakewordHandler()
+
 import sounddevice as sd
 import soundfile as sf
 import websockets
@@ -1408,6 +1414,17 @@ async def process_task(source: str, user_text: str, vision_context: str = "") ->
 
     print(f"MCP: Wake word confirmed! Processing: '{clean_user_text}'")
 
+    # Check for song wakeword commands (silent - no TTS)
+    song_patterns = ["sing the song ", "play the song ", "sing ", "play "]
+    for pattern in song_patterns:
+        if clean_user_text.lower().startswith(pattern):
+            song_name = clean_user_text[len(pattern):].strip()
+            if song_name:
+                print(f"MCP: Song command detected! Searching for: {song_name}")
+                if song_handler.handle_command(f"sing the song {song_name}"):
+                    return ""
+                break
+    
     # Check for VMagicMirror motion commands (silent - no TTS)
     for motion in VMAGIC_MOTIONS.keys():
         if motion in clean_user_text.lower():

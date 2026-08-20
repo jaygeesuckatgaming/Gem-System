@@ -28,9 +28,10 @@ class SongLibrary:
         - {song_name}_track1.wav and {song_name}_track2.wav
         - {song_name}_a.wav and {song_name}_b.wav
         """
-        song_name = song_name.lower().replace(" ", "_").replace("-", "_")
+        song_name_normalized = song_name.lower().replace(" ", "_").replace("-", "_")
         
-        # Possible naming patterns
+        all_wav_files = list(self.music_folder.glob("*.wav"))
+        
         patterns = [
             ("_vocals", "_instrumental"),
             ("_track1", "_track2"),
@@ -41,18 +42,25 @@ class SongLibrary:
         ]
         
         for pattern1, pattern2 in patterns:
-            file1 = self.music_folder / f"{song_name}{pattern1}.wav"
-            file2 = self.music_folder / f"{song_name}{pattern2}.wav"
-            
-            if file1.exists() and file2.exists():
-                return (str(file1), str(file2))
+            for file in all_wav_files:
+                stem = file.stem.lower()
+                if stem.endswith(pattern1):
+                    base_name = stem[:-len(pattern1)]
+                    if base_name == song_name_normalized:
+                        file1 = file
+                        file2_name_normalized = song_name_normalized + pattern2 + ".wav"
+                        for f in all_wav_files:
+                            if f.name.lower() == file2_name_normalized:
+                                return (str(file1), str(f))
         
-        # Try without pattern (exact match)
-        file1 = self.music_folder / f"{song_name}.wav"
-        file2 = self.music_folder / f"{song_name}_2.wav"
-        
-        if file1.exists() and file2.exists():
-            return (str(file1), str(file2))
+        for file in all_wav_files:
+            stem = file.stem.lower()
+            if stem == song_name_normalized:
+                file1 = file
+                file2_name_normalized = song_name_normalized + "_2.wav"
+                for f in all_wav_files:
+                    if f.name.lower() == file2_name_normalized:
+                        return (str(file1), str(f))
         
         return None
     

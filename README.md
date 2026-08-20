@@ -1,5 +1,5 @@
 # Gem-System
-
+Mainly for Windows but should be kind of easy to adapt to Linux..
 A multimodal AI assistant system with voice interaction, face animation, music playback, and extensive service integration.
 
 ## Table of Contents
@@ -23,7 +23,7 @@ Gem-System is a comprehensive AI assistant platform featuring:
 
 - **Voice Interaction**: Wake word detection, speech-to-text, and natural language responses
 - **Multimodal LLM Support**: Gemini, Ollama (local/cloud), LM Studio, Mintron
-- **Vision Integration**: Camera capture with VLM scene analysis
+- **Vision Integration**: Camera capture with VLM scene analysis (Camera, NDI)
 - **Face Animation**: Real-time blendshape generation for Unreal Engine via LiveLink
 - **Music System**: YouTube/YouTube Music integration with queue management
 - **Twitch Integration**: Chat monitoring and song request handling

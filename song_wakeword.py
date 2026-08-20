@@ -55,8 +55,10 @@ class SongWakewordHandler:
         print(f"  File 1: {file1}")
         print(f"  File 2: {file2}")
         
-        # Launch player with loaded files
-        self.launch_player(file1, file2)
+        # Launch player in a separate thread to avoid blocking
+        import threading
+        player_thread = threading.Thread(target=self.launch_player, args=(file1, file2), daemon=True)
+        player_thread.start()
         
         return True
     

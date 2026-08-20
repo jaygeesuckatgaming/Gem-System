@@ -2,7 +2,7 @@
 
 ## What Was Implemented
 
-Your Gem-System MCP now has full OpenCode integration! You can chat with OpenCode through your existing chat system.
+Full OpenCode integration! You can chat with OpenCode through your existing chat system.
 
 ## How It Works
 
